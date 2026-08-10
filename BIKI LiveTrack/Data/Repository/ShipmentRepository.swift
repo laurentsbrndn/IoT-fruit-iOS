@@ -14,6 +14,7 @@ protocol ShipmentRepositoryProtocol {
     func fetchActiveShipments() async throws -> [Shipment]
     func fetchShipmentDetail(id: String) async throws -> Shipment
     func createShipment(payload: Data) async throws -> Shipment
+    func updateShipment(id: String, payload: Data) async throws -> Shipment
     func finishShipment(id: String) async throws -> Shipment
 }
 
@@ -42,6 +43,11 @@ final class ShipmentRepository: ShipmentRepositoryProtocol {
     
     func createShipment(payload: Data) async throws -> Shipment {
         let endpoint = APIEndpoint.createShipment(payload: payload)
+        return try await apiClient.request(endpoint, responseType: Shipment.self)
+    }
+    
+    func updateShipment(id: String, payload: Data) async throws -> Shipment {
+        let endpoint = APIEndpoint.updateShipment(id: id, payload: payload)
         return try await apiClient.request(endpoint, responseType: Shipment.self)
     }
     

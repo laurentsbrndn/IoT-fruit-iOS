@@ -12,6 +12,7 @@ import Foundation
 enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
+    case put = "PUT"
     case patch = "PATCH"
     case delete = "DELETE"
 }
@@ -21,6 +22,7 @@ enum APIEndpoint {
     case getActiveShipments
     case getShipment(id: String)
     case createShipment(payload: Data)
+    case updateShipment(id: String, payload: Data)
     case finishShipment(id: String)
     
     case getSensors
@@ -38,6 +40,7 @@ enum APIEndpoint {
         case .getShipments, .createShipment: return "/api/shipments"
         case .getActiveShipments: return "/api/shipments/active"
         case .getShipment(let id): return "/api/shipments/\(id)"
+        case .updateShipment(let id, _): return "/api/shipments/\(id)"
         case .finishShipment(let id): return "/api/shipments/\(id)/finish"
             
         case .getSensors: return "/api/sensors"
@@ -56,6 +59,7 @@ enum APIEndpoint {
     var method: HTTPMethod {
         switch self {
         case .createShipment: return .post
+        case .updateShipment: return .put
         case .finishShipment: return .patch
         default: return .get
         }
@@ -64,6 +68,7 @@ enum APIEndpoint {
     var body: Data? {
         switch self {
         case .createShipment(let payload): return payload
+        case .updateShipment(_, let payload): return payload
         default: return nil
         }
     }
