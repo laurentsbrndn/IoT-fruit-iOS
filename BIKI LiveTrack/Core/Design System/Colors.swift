@@ -37,17 +37,18 @@ extension Color {
 
 struct AppTheme {
     let primary = Color(hex: "33613D")
-    let secondary = Color(hex: "A4C5CE")
-    let accent = Color(hex: "829FBC")
     
     let background = Color(hex: "E0EAE9")
     let surface = Color(UIColor.secondarySystemGroupedBackground)
     
-    let success = Color.green
-    let warning = Color(hex: "E2B200")
-    let danger = Color.red
-    let offline = Color.red
-    let info = Color.cyan
+    let pillideal = Color(hex: "B9E5C2")
+    let warning = Color(hex: "C09804")
+    let offline = Color(hex: "D50408")
+    let offlinecard = Color(hex: "D0D0D0")
+    let TableRow1 = Color.white
+    let TableRow2 = Color(hex: "F8FDF9")
+    let Update = Color.cyan
+    let FrameCard = Color(hex: "EFF2F2")
     
     let textPrimary = Color.primary
     let textSecondary = Color.secondary
