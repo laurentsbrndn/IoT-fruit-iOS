@@ -17,13 +17,18 @@ struct ShipmentHistoryRowComponent: View {
     
     var truckPlate: String
     var driverName: String
+    
     var shipmentDate: String
     var shipmentTime: String
     var arrivalDate: String
     var arrivalTime: String
     var statusColor: Color
-    
     var rowBackgroundColor: Color
+    
+    var rawStartDate: Date
+    var rawEndDate: Date
+    
+    var onSaveTime: (Date, TimeEditType) -> Void
     
     @State private var showingEditTimeSheet = false
     @State private var selectedEditType: TimeEditType = .start
@@ -96,11 +101,17 @@ struct ShipmentHistoryRowComponent: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 24)
-        .background(rowBackgroundColor) 
+        .background(rowBackgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .sheet(isPresented: $showingEditTimeSheet) {
-             EditTimeSheetComponent(editType: selectedEditType)
-                 .presentationDetents([.medium, .large])
+             EditTimeSheetComponent(
+                editType: selectedEditType,
+                initialDate: selectedEditType == .start ? rawStartDate : rawEndDate,
+                onSave: { newDate in
+                    onSaveTime(newDate, selectedEditType)
+                }
+             )
+             .presentationDetents([.medium, .large])
         }
     }
 }

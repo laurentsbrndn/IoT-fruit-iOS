@@ -9,7 +9,6 @@ import Foundation
 import Combine
 import SwiftUI
 
-// MARK: - Enums
 enum SortOrder: String {
     case newestFirst = "Newest First"
     case oldestFirst = "Oldest First"
@@ -31,13 +30,11 @@ final class ShipmentHistoryViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var lastUpdated: Date = Date()
     
-    // MARK: - Search, Sort, Filter & Pagination Properties
     @Published var searchText: String = ""
     @Published var currentPage: Int = 1
     @Published var sortOrder: SortOrder = .newestFirst
     
-    // Filter properties
-    @Published var dateFilter: DateFilterOption = .last30Days // Default sesuai mockup awal
+    @Published var dateFilter: DateFilterOption = .last30Days
     @Published var customStartDate: Date = Date()
     @Published var customEndDate: Date = Date()
     @Published var isShowingCustomDatePicker: Bool = false
@@ -50,11 +47,9 @@ final class ShipmentHistoryViewModel: ObservableObject {
         self.shipmentRepository = shipmentRepository
     }
     
-    // MARK: - Computed Properties
     var filteredShipments: [Shipment] {
         var filtered = completedShipments
         
-        // 1. Filter Pencarian
         if !searchText.isEmpty {
             filtered = filtered.filter { shipment in
                 let idString = "#\(shipment.id.uuidString.prefix(8).uppercased())"
@@ -64,7 +59,6 @@ final class ShipmentHistoryViewModel: ObservableObject {
             }
         }
         
-        // 2. Filter Waktu (Berdasarkan startDate)
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: Date())
         
@@ -87,7 +81,6 @@ final class ShipmentHistoryViewModel: ObservableObject {
                 return shipDate >= past
             case .custom:
                 let start = calendar.startOfDay(for: customStartDate)
-                // Mengatur endDate ke penghujung hari (23:59:59)
                 var components = DateComponents()
                 components.day = 1
                 components.second = -1
@@ -97,7 +90,6 @@ final class ShipmentHistoryViewModel: ObservableObject {
             }
         }
         
-        // 3. Logika Pengurutan
         filtered.sort {
             if sortOrder == .newestFirst {
                 return $0.startDate > $1.startDate
@@ -129,7 +121,6 @@ final class ShipmentHistoryViewModel: ObservableObject {
         return "Showing \(start)–\(end) of \(total) shipments"
     }
     
-    // MARK: - Methods
     func loadHistoryData() async {
         self.isLoading = true
         self.errorMessage = nil
@@ -147,7 +138,6 @@ final class ShipmentHistoryViewModel: ObservableObject {
         self.isLoading = false
     }
     
-    // MARK: - Export Logic
     func generateCSVURL() -> URL {
         var csvString = "Shipment ID,Origin,Destination,Plate Number,Driver Name,Shipment Date,Arrival Date\n"
         
@@ -176,6 +166,43 @@ final class ShipmentHistoryViewModel: ObservableObject {
         return fileURL
     }
     
+    func updateShipmentTime(shipment: Shipment, newDate: Date, editType: TimeEditType) async {
+        var updatedStartDate = shipment.startDate
+        var updatedEndDate = shipment.endDate
+        
+        if editType == .start {
+            updatedStartDate = newDate
+        } else {
+            updatedEndDate = newDate
+        }
+        
+        let dto = UpdateShipmentDTO(
+            deviceId: shipment.device.id.uuidString,
+            driverId: shipment.driver.id.uuidString,
+            truckPlateNumber: shipment.truckPlateNumber,
+            startDate: updatedStartDate,
+            endDate: updatedEndDate,
+            startLatitude: shipment.startLatitude,
+            startLongitude: shipment.startLongitude,
+            endLatitude: shipment.endLatitude,
+            endLongitude: shipment.endLongitude
+        )
+        
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            
+            let payload = try encoder.encode(dto)
+            let updatedShipment = try await shipmentRepository.updateShipment(id: shipment.id.uuidString, payload: payload)
+            
+            if let index = self.completedShipments.firstIndex(where: { $0.id == shipment.id }) {
+                self.completedShipments[index] = updatedShipment
+            }
+        } catch {
+            self.errorMessage = error.localizedDescription
+            print("Gagal menyimpan waktu shipment: \(error)")
+        }
+    }
     func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMM yyyy"

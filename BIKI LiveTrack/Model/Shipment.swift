@@ -32,3 +32,15 @@ struct Shipment: Identifiable, Codable {
         case endLongitude
     }
 }
+
+struct UpdateShipmentDTO: Codable {
+    let deviceId: String
+    let driverId: String
+    let truckPlateNumber: String
+    let startDate: Date
+    let endDate: Date?
+    let startLatitude: Double
+    let startLongitude: Double
+    let endLatitude: Double?
+    let endLongitude: Double?
+}

@@ -12,7 +12,6 @@ struct ShipmentHistoryMenuComponent: View {
     
     var body: some View {
         Menu {
-            // MARK: - Sort By Submenu
             Menu {
                 Button(action: {
                     viewModel.sortOrder = .newestFirst
@@ -39,7 +38,6 @@ struct ShipmentHistoryMenuComponent: View {
                 Label("Sort By: \(viewModel.sortOrder.rawValue)", systemImage: "arrow.up.arrow.down")
             }
             
-            // MARK: - Filter Date Submenu
             Menu {
                 ForEach(DateFilterOption.allCases, id: \.self) { option in
                     Button(action: {
@@ -51,12 +49,9 @@ struct ShipmentHistoryMenuComponent: View {
                             viewModel.currentPage = 1
                         }
                     }) {
-                        // Menangani tampilan label HIG dengan Checkmark / Chevron
                         if viewModel.dateFilter == option && option != .custom {
                             Label(option.rawValue, systemImage: "checkmark")
                         } else if option == .custom {
-                            // SwiftUI tidak secara natural menampilkan chevron pada button dalam menu,
-                            // namun kita masukkan agar sesuai standard bila didukung iOS bersangkutan
                             Label(option.rawValue, systemImage: "chevron.right")
                         } else {
                             Text(option.rawValue)
@@ -64,15 +59,13 @@ struct ShipmentHistoryMenuComponent: View {
                     }
                 }
             } label: {
-                // Label dynamic yang menampilkan nama filter aktif
                 Label("Filter Date: \(viewModel.dateFilter.rawValue)", systemImage: "calendar")
             }
             
             Divider()
             
-            // MARK: - Export As CSV
             ShareLink(item: viewModel.generateCSVURL()) {
-                Label("Export As CSV", systemImage: "clock") // Icon clock sesuai design yang Anda berikan
+                Label("Export As CSV", systemImage: "clock")
             }
             
         } label: {
@@ -83,10 +76,9 @@ struct ShipmentHistoryMenuComponent: View {
                 .background(Color.white)
                 .clipShape(Circle())
         }
-        // Melampirkan custom sheet di level Menu agar tidak mengganggu layout di luar
         .sheet(isPresented: $viewModel.isShowingCustomDatePicker) {
             CustomDatePickerSheetComponent(viewModel: viewModel)
-                .presentationDetents([.height(550), .large]) // Memberikan height yang compact agar sesuai gambar
+                .presentationDetents([.height(550), .large])
         }
     }
 }

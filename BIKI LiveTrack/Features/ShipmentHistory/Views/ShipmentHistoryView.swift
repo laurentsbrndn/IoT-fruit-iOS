@@ -97,7 +97,14 @@ struct ShipmentHistoryView: View {
                                     arrivalDate: viewModel.formatDate(shipment.endDate ?? Date()),
                                     arrivalTime: viewModel.formatTime(shipment.endDate ?? Date()),
                                     statusColor: Color.theme.primary,
-                                    rowBackgroundColor: index % 2 == 0 ? Color.theme.TableRow1 : Color.theme.TableRow2
+                                    rowBackgroundColor: index % 2 == 0 ? Color.theme.TableRow1 : Color.theme.TableRow2,
+                                    rawStartDate: shipment.startDate,
+                                    rawEndDate: shipment.endDate ?? Date(),
+                                    onSaveTime: { newDate, type in
+                                        Task {
+                                            await viewModel.updateShipmentTime(shipment: shipment, newDate: newDate, editType: type)
+                                        }
+                                    }
                                 )
                             }
                         }

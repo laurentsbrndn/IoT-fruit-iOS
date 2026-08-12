@@ -22,8 +22,15 @@ enum TimeEditType {
 struct EditTimeSheetComponent: View {
     @Environment(\.dismiss) var dismiss
     var editType: TimeEditType
+    var onSave: (Date) -> Void
     
-    @State private var selectedDate = Date()
+    @State private var selectedDate: Date
+    
+    init(editType: TimeEditType, initialDate: Date, onSave: @escaping (Date) -> Void) {
+        self.editType = editType
+        self._selectedDate = State(initialValue: initialDate)
+        self.onSave = onSave
+    }
     
     var body: some View {
         NavigationStack {
@@ -48,16 +55,11 @@ struct EditTimeSheetComponent: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        // panggil viewmodel buat nyimpen data ke api
-                        print("Tanggal disimpan: \(selectedDate)")
+                        onSave(selectedDate)
                         dismiss()
                     }
                 }
             }
         }
     }
-}
-
-#Preview(traits: .landscapeLeft) {
-    EditTimeSheetComponent(editType: .start)
 }

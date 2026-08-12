@@ -21,7 +21,6 @@ struct CustomDatePickerSheetComponent: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
                 
-                // Kalender grafis di bagian atas
                 DatePicker("Date", selection: $viewModel.customStartDate, displayedComponents: .date)
                     .datePickerStyle(.graphical)
                     .padding(.horizontal, 16)
@@ -29,7 +28,6 @@ struct CustomDatePickerSheetComponent: View {
                 Divider()
                     .padding(.horizontal, 24)
                 
-                // Pilihan compact Starts & Ends
                 VStack(spacing: 16) {
                     DatePicker("Starts", selection: $viewModel.customStartDate, displayedComponents: .date)
                         .font(.system(size: 17, weight: .regular))
