@@ -23,6 +23,8 @@ struct ShipmentHistoryRowComponent: View {
     var arrivalTime: String
     var statusColor: Color
     
+    var rowBackgroundColor: Color
+    
     @State private var showingEditTimeSheet = false
     @State private var selectedEditType: TimeEditType = .start
     
@@ -94,7 +96,7 @@ struct ShipmentHistoryRowComponent: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 24)
-        .background(Color.white)
+        .background(rowBackgroundColor) 
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .sheet(isPresented: $showingEditTimeSheet) {
              EditTimeSheetComponent(editType: selectedEditType)
