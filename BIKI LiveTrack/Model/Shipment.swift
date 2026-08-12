@@ -9,8 +9,8 @@ import Foundation
 
 struct Shipment: Identifiable, Codable {
     let id: UUID
-    let deviceID: UUID
-    let driverID: UUID
+    let device: Device
+    let driver: Driver
     let truckPlateNumber: String
     let startDate: Date
     let endDate: Date?
@@ -20,15 +20,15 @@ struct Shipment: Identifiable, Codable {
     let endLongitude: Double?
     
     enum CodingKeys: String, CodingKey {
-        case id = "shipment_id"
-        case deviceID = "device_id"
-        case driverID = "driver_id"
-        case truckPlateNumber = "shipment_truck_plate_number"
-        case startDate = "shipment_start_date"
-        case endDate = "shipment_end_date"
-        case startLatitude = "shipment_start_latitude"
-        case startLongitude = "shipment_start_longitude"
-        case endLatitude = "shipment_end_latitude"
-        case endLongitude = "shipment_end_longitude"
+        case id
+        case device
+        case driver      
+        case truckPlateNumber
+        case startDate
+        case endDate
+        case startLatitude
+        case startLongitude
+        case endLatitude
+        case endLongitude
     }
 }

@@ -16,13 +16,13 @@ struct AppNavigationBarComponent: View {
             if isSidebarVisible {
                 sidebarStyle
             } else {
-                pillStyle
+                topBarStyle
             }
         }
     }
     
-    var pillStyle: some View {
-        HStack(spacing: 8) {
+    var topBarStyle: some View {
+        HStack {
             Button(action: {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     isSidebarVisible.toggle()
@@ -31,38 +31,17 @@ struct AppNavigationBarComponent: View {
                 Image(systemName: "sidebar.left")
                     .font(.system(size: 20, weight: .medium))
                     .foregroundColor(.primary)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+                    .frame(width: 48, height: 48)
+                    .background(Color.white)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
             }
             .buttonStyle(PlainButtonStyle())
             
-            Divider()
-                .frame(height: 20)
-            
-            HStack(spacing: 4) {
-                ForEach(AppTab.allCases, id: \.self) { tab in
-                    Button(action: {
-                        withAnimation { selectedTab = tab }
-                    }) {
-                        Text(tab.rawValue)
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(selectedTab == tab ? .blue : .primary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                Capsule()
-                                    .fill(selectedTab == tab ? Color.blue.opacity(0.1) : Color.clear)
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
+            Spacer()
         }
-        .padding(.trailing, 8)
-        .padding(.vertical, 4)
-        .background(Color.white)
-        .clipShape(Capsule())
-        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+        .padding(.horizontal, 32)
+        .padding(.top, 16)
     }
     
     var sidebarStyle: some View {

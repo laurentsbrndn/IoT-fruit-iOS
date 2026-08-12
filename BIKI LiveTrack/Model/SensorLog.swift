@@ -12,9 +12,8 @@ struct SensorLog: Identifiable, Codable {
     let shipmentID: UUID
     let temperature: Double?
     let humidity: Double?
-    let latitude: Double?
-    let longitude: Double?
-    let batteryPercentage: Double?
+    let latitude: [Double]?
+    let longitude: [Double]?
     let timestamps: Date?
     
     enum CodingKeys: String, CodingKey {
@@ -24,7 +23,18 @@ struct SensorLog: Identifiable, Codable {
         case humidity = "sensor_log_humidity"
         case latitude = "sensor_log_latitude"
         case longitude = "sensor_log_longitude"
-        case batteryPercentage = "sensor_log_battery_percentage"
         case timestamps = "sensor_log_timestamps"
+    }
+    
+    var averageLatitude: Double? {
+        guard let latArray = latitude, !latArray.isEmpty else { return nil }
+        let sum = latArray.reduce(0, +)
+        return sum / Double(latArray.count)
+    }
+    
+    var averageLongitude: Double? {
+        guard let lonArray = longitude, !lonArray.isEmpty else { return nil }
+        let sum = lonArray.reduce(0, +)
+        return sum / Double(lonArray.count)
     }
 }

@@ -13,8 +13,8 @@ struct Driver: Identifiable, Codable {
     let phoneNumber: String
     
     enum CodingKeys: String, CodingKey {
-        case id = "driver_id"
-        case name = "driver_name"
-        case phoneNumber = "driver_phone_number"
+        case id
+        case name = "driverName"
+        case phoneNumber = "driverPhoneNumber" 
     }
 }

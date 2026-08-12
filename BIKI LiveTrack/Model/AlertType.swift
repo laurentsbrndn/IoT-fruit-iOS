@@ -11,12 +11,14 @@ struct AlertType: Identifiable, Codable {
     let id: UUID
     let title: String
     let severity: String
+    let category: String
     let description: String?
     
     enum CodingKeys: String, CodingKey {
         case id = "alert_type_id"
         case title = "alert_types_title"
         case severity = "alert_types_severity"
+        case category = "alert_types_category"
         case description = "alert_types_description"
     }
 }

@@ -16,12 +16,8 @@ struct ContentView: View {
             switch selectedTab {
             case .home:
                 HomeView()
-            case .liveShipment:
-                Text("Live Shipment View")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .shipmentHistory:
-                Text("Shipment History View")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ShipmentHistoryView()
             }
         }
         .padding(.top, 80)

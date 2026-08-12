@@ -8,80 +8,103 @@
 import SwiftUI
 import CoreLocation
 
-struct ShipmentInfoCardComponent: View {
+struct ShipmentLiveInfoCardComponent: View {
     var shipmentID: String
-    var statusIcon: String
-    var statusText: String
-    var statusColor: Color
+    var status: DeviceStatus
     var latitude: Double
     var longitude: Double
     var driverName: String
     var driverContact: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .center) {
+
+
+            HStack(alignment: .center, spacing: 12) {
                 Text(shipmentID)
-                    .font(.system(size: 32, weight: .regular))
-                    .foregroundColor(Color.theme.textPrimary)
-                
-                Spacer()
-                
-                HStack(spacing: 6) {
-                    Image(systemName: statusIcon)
-                        .font(.system(size: 12, weight: .bold))
-                    Text(statusText)
-                        .font(.system(size: 13, weight: .semibold))
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(statusColor)
-                .foregroundColor(.white)
-                .clipShape(Capsule())
+                    .font(.title2.weight(.regular))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+
+                Spacer(minLength: 12)
+
+                StatusBadgeComponent(status: status, size: .small)
             }
-            
-            LocationLabelComponent(latitude: latitude, longitude: longitude)
-                .frame(height: 22, alignment: .leading)
-            
+
+            LocationLabelComponent(
+                latitude: latitude,
+                longitude: longitude
+            )
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             Divider()
-                .background(Color.gray.opacity(0.3))
-                .padding(.vertical, 2)
-            
-            HStack {
-                Text(driverName)
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(Color.theme.textPrimary)
-                
-                Spacer()
-                
-                Text(driverContact)
-                    .font(.system(size: 16, weight: .regular))
-                    .monospacedDigit()
-                    .foregroundColor(Color.theme.textPrimary)
+                .overlay(Color(uiColor: .separator))
+
+            HStack(spacing: 0) {
+                ShipmentInfoItem(
+                    systemImage: "person.circle.fill",
+                    text: driverName
+                )
+
+                Spacer(minLength: 16)
+
+                Rectangle()
+                    .fill(Color(uiColor: .separator))
+                    .frame(width: 1, height: 28)
+
+                Spacer(minLength: 16)
+
+                ShipmentInfoItem(
+                    systemImage: "phone",
+                    text: driverContact
+                )
             }
         }
-        .padding(24)
-        .background(Color.white)
-        .cornerRadius(24)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(uiColor: .systemBackground))
+        .clipShape(.rect(cornerRadius: 24))
+        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct ShipmentInfoItem: View {
+    let systemImage: String
+    let text: String
+
+    var body: some View {
+        Label {
+            Text(text)
+                .font(.body)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        } icon: {
+            Image(systemName: systemImage)
+                .font(.system(size: 23, weight: .regular))
+                .foregroundStyle(.secondary)
+                .symbolRenderingMode(.hierarchical)
+        }
+        .labelStyle(.titleAndIcon)
     }
 }
 
 #Preview {
     ZStack {
-        Color.theme.background.ignoresSafeArea()
-        
-        VStack {
-            ShipmentInfoCardComponent(
-                shipmentID: "#BIKI11750",
-                statusIcon: "exclamationmark.triangle.fill",
-                statusText: "Warning",
-                statusColor: Color.theme.warning,
-                latitude: -6.1754,
-                longitude: 106.8272,
-                driverName: "Bayu Sapta Haji",
-                driverContact: "0878 xxx xxx"
-            )
-            .padding()
-        }
+        Color(uiColor: .secondarySystemBackground)
+            .ignoresSafeArea()
+
+        ShipmentLiveInfoCardComponent(
+            shipmentID: "#BIKI11750",
+            status: .warning,
+            latitude: -6.1754,
+            longitude: 106.8272,
+            driverName: "Bayu Sapta Haji",
+            driverContact: "0818 6789 7689"
+        )
+        .padding(.horizontal)
     }
 }
