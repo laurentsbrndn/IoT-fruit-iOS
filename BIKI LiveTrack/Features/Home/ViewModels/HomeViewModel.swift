@@ -46,9 +46,9 @@ final class HomeViewModel: ObservableObject {
             
             await fetchLatestAlerts(for: active)
             
-            for shipment in self.deliveredShipments {
-                self.shipmentStatuses[shipment.id] = .delivered
-            }
+//            for shipment in self.deliveredShipments {
+//                self.shipmentStatuses[shipment.id] = .delivered
+//            }
             
         } catch {
             self.errorMessage = error.localizedDescription

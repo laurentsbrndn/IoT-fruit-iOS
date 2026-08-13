@@ -18,33 +18,39 @@ struct ShipmentLiveInfoCardComponent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-
-
-            HStack(alignment: .center, spacing: 12) {
-                Text(shipmentID)
-                    .font(.title2.weight(.regular))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-
-                Spacer(minLength: 12)
-
-                StatusBadgeComponent(status: status, size: .small)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .center, spacing: 12) {
+                    Text(shipmentID)
+                        .font(.app.heading2)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    
+                    Spacer(minLength: 12)
+                    
+                    StatusBadgeComponent(
+                        status: status
+                    )
+                }
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "location")
+                        .foregroundStyle(.secondary)
+                    
+                    LocationLabelComponent(
+                        latitude: latitude,
+                        longitude: longitude
+                    )
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-
-            LocationLabelComponent(
-                latitude: latitude,
-                longitude: longitude
-            )
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-
+            
             Divider()
                 .overlay(Color(uiColor: .separator))
 
             HStack(spacing: 0) {
                 ShipmentInfoItem(
-                    systemImage: "person.circle.fill",
+                    systemImage: "person",
                     text: driverName
                 )
 
@@ -74,17 +80,17 @@ struct ShipmentLiveInfoCardComponent: View {
 private struct ShipmentInfoItem: View {
     let systemImage: String
     let text: String
-
+    
     var body: some View {
         Label {
             Text(text)
-                .font(.body)
-                .foregroundStyle(.primary)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         } icon: {
             Image(systemName: systemImage)
-                .font(.system(size: 23, weight: .regular))
+                .font(.system(size: 18, weight: .regular))
                 .foregroundStyle(.secondary)
                 .symbolRenderingMode(.hierarchical)
         }

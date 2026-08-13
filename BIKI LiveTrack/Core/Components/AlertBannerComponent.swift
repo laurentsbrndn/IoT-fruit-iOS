@@ -17,28 +17,31 @@ struct AlertBannerComponent: View {
     var textColor: Color = Color.theme.primaryGreen
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .center, spacing: 16) {
             Image(systemName: iconName)
                 .font(.system(size: 28))
                 .foregroundColor(iconColor)
                 .frame(width: 28)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.app.title2)
                     .foregroundColor(textColor)
 
                 Text(message)
-                    .font(.system(size: 14, weight: .regular))
+                    .font(.app.title1)
                     .foregroundColor(textColor.opacity(0.75))
             }
-
+            
             Spacer()
-
-            Text(timeString)
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(textColor.opacity(0.75))
-                .padding(.top, 2)
+            
+            VStack {
+                Text(timeString)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(textColor)
+                Spacer()
+                }
+          
         }
         .padding(16)
         .background(backgroundColor)

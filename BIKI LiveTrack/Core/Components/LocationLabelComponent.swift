@@ -16,7 +16,7 @@ struct LocationLabelComponent: View {
     
     var body: some View {
         Text(locationName)
-            .font(.system(size: 14, weight: .regular))
+            .font(.app.body)
             .foregroundColor(Color.theme.textSecondary)
             .task {
                 await fetchLocationName()
