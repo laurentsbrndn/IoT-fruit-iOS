@@ -36,19 +36,19 @@ extension Color {
 }
 
 struct AppTheme {
-    let primary = Color(hex: "33613D")
+    let primaryGreen = Color(hex: "33613D") // tulisan ideal
     
-    let background = Color(hex: "E0EAE9")
+    let tertiaryGreen = Color(hex: "E0EAE9") // bg
     let surface = Color(UIColor.secondarySystemGroupedBackground)
     
-    let pillideal = Color(hex: "B9E5C2")
-    let warning = Color(hex: "C09804")
-    let offline = Color(hex: "D50408")
-    let offlinecard = Color(hex: "D0D0D0")
-    let TableRow1 = Color.white
-    let TableRow2 = Color(hex: "F8FDF9")
-    let Update = Color.cyan
-    let FrameCard = Color(hex: "EFF2F2")
+    let secondaryGreen = Color(hex: "B9E5C2") // bg ideal
+    let secondaryYellow = Color(hex: "FFF4CD") // bg warning
+    let primaryYellow = Color(hex: "C09804") // tulisan warning
+    let primaryRed = Color(hex: "D50408") // tulisan offline
+    let secondaryRed = Color(hex: "FFC5C6") // bg offline
+    let grey = Color(hex: "D0D0D0") // offline card
+    let lightGreen = Color(hex: "F8FDF9") // table row 2 (row 1nya white) - dot yg update itu pake .cyan
+//    let FrameCard = Color(hex: "EFF2F2")
     
     let textPrimary = Color.primary
     let textSecondary = Color.secondary
