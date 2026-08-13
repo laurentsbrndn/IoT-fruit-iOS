@@ -21,10 +21,7 @@ enum HistoricalLogDisplay: String, CaseIterable, Identifiable {
 
 struct ShipmentSummaryView: View {
     @StateObject private var viewModel: ShipmentSummaryViewModel
-    @State private var selectedLogDisplay: HistoricalLogDisplay = .graph
     @State private var isShowingTripDetails = false
-    @State private var exportURL: URL?
-    @State private var isShowingShareSheet = false
 
     init(
         shipment: Shipment,
@@ -55,7 +52,7 @@ struct ShipmentSummaryView: View {
                         minValue: viewModel.temperatureText(viewModel.minimumTemperature),
                         maxValue: viewModel.temperatureText(viewModel.maximumTemperature),
                         statusIcon: "checkmark.circle.fill",
-                        statusText: viewModel.temperatureIsIdeal ? "Ideal" : "Warning",
+                        statusText: viewModel.temperatureStatusText,
                         statusColor: viewModel.temperatureIsIdeal ? Color.theme.primaryGreen : Color.theme.primaryYellow
                     )
 
@@ -65,7 +62,7 @@ struct ShipmentSummaryView: View {
                         minValue: viewModel.humidityText(viewModel.minimumHumidity),
                         maxValue: viewModel.humidityText(viewModel.maximumHumidity),
                         statusIcon: "exclamationmark.triangle.fill",
-                        statusText: viewModel.humidityIsIdeal ? "Ideal" : "Warning",
+                        statusText: viewModel.humidityStatusText,
                         statusColor: viewModel.humidityIsIdeal ? Color.theme.primaryGreen : Color.theme.primaryYellow
                     )
 
@@ -89,10 +86,10 @@ struct ShipmentSummaryView: View {
 
                     Spacer()
 
-                    Picker("Historical log display", selection: $selectedLogDisplay) {
+                    Picker("Historical log display", selection: $viewModel.selectedLogDisplay) {
                         ForEach(HistoricalLogDisplay.allCases) { display in
                             Text(display.rawValue).tag(display)
-                        }
+                        } //test
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 280)
@@ -121,8 +118,8 @@ struct ShipmentSummaryView: View {
                 locationLogs: viewModel.locationLogs
             )
         }
-        .sheet(isPresented: $isShowingShareSheet) {
-            if let exportURL {
+        .sheet(isPresented: $viewModel.isShowingShareSheet) {
+            if let exportURL = viewModel.exportURL {
                 ActivitySheet(activityItems: [exportURL])
             }
         }
@@ -131,7 +128,7 @@ struct ShipmentSummaryView: View {
     private var shipmentHeader: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top) {
-                Text("#\(viewModel.shipment.id.uuidString.prefix(8).uppercased())")
+                Text(viewModel.shipmentIDText)
                     .font(.system(size: 46, weight: .bold))
                     .foregroundColor(Color.theme.textPrimary)
 
@@ -141,10 +138,10 @@ struct ShipmentSummaryView: View {
             }
 
             HStack(alignment: .top, spacing: 56) {
-                HeaderDetail(title: "Device ID", value: viewModel.shipment.device.name)
-                HeaderDetail(title: "Plate Number", value: viewModel.shipment.truckPlateNumber)
-                HeaderDetail(title: "Contact", value: "\(viewModel.shipment.driver.name) \(viewModel.shipment.driver.phoneNumber)")
-                HeaderDetail(title: "Address", value: destinationCoordinateText)
+                HeaderDetail(title: "Device Name", value: viewModel.deviceIDText)
+                HeaderDetail(title: "Plate Number", value: viewModel.plateNumberText)
+                HeaderDetail(title: "Contact", value: viewModel.contactText)
+                HeaderDetail(title: "Address", value: viewModel.destinationText)
             }
         }
     }
@@ -152,7 +149,7 @@ struct ShipmentSummaryView: View {
     private var exportMenu: some View {
         Menu {
             Button {
-                exportCSV()
+                viewModel.prepareCSVExport()
             } label: {
                 Label("Export Data\nAs CSV", systemImage: "square.and.arrow.up")
             }
@@ -172,15 +169,6 @@ struct ShipmentSummaryView: View {
         .accessibilityLabel("Export options")
     }
 
-    private func exportCSV() {
-        do {
-            exportURL = try viewModel.generateCSVURL()
-            isShowingShareSheet = true
-        } catch {
-            viewModel.errorMessage = "Could not create CSV: \(error.localizedDescription)"
-        }
-    }
-
     private func exportGraphPNG() {
         let graph = HistoricalLogGraphView(sensorLogs: viewModel.sensorLogs)
             .frame(width: 1_200)
@@ -190,22 +178,7 @@ struct ShipmentSummaryView: View {
         let renderer = ImageRenderer(content: graph)
         renderer.scale = UIScreen.main.scale
 
-        guard let pngData = renderer.uiImage?.pngData() else {
-            viewModel.errorMessage = "Could not create graph image."
-            return
-        }
-
-        let shipmentID = viewModel.shipment.id.uuidString.prefix(8).uppercased()
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("Shipment_\(shipmentID)_Historical_Graph.png")
-
-        do {
-            try pngData.write(to: url, options: .atomic)
-            exportURL = url
-            isShowingShareSheet = true
-        } catch {
-            viewModel.errorMessage = "Could not save graph image: \(error.localizedDescription)"
-        }
+        viewModel.prepareGraphExport(renderer.uiImage?.pngData())
     }
 
     @ViewBuilder private var logContent: some View {
@@ -218,18 +191,13 @@ struct ShipmentSummaryView: View {
         } else if viewModel.sensorLogs.isEmpty {
             ContentUnavailableView("No historical readings", systemImage: "chart.xyaxis.line")
                 .frame(maxWidth: .infinity, minHeight: 280)
-        } else if selectedLogDisplay == .graph {
+        } else if viewModel.selectedLogDisplay == .graph {
             HistoricalLogGraphView(sensorLogs: viewModel.sensorLogs)
         } else {
             HistoricalLogTableView(sensorLogs: viewModel.sensorLogs)
         }
     }
 
-    private var destinationCoordinateText: String {
-        guard let latitude = viewModel.shipment.endLatitude,
-              let longitude = viewModel.shipment.endLongitude else { return "In progress" }
-        return String(format: "%.4f, %.4f", latitude, longitude)
-    }
 }
 
 private struct HeaderDetail: View {
@@ -240,7 +208,7 @@ private struct HeaderDetail: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.app.body)
-                .foregroundColor(Color.theme.textSecondary)
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(.app.bodyBold)
                 .foregroundColor(Color.theme.textPrimary)
@@ -278,15 +246,19 @@ enum ShipmentSummaryPreviewData {
         endLongitude: 110.4381
     )
 
-    static let sensorLogs: [SensorLog] = [
-        log(hour: 0, temperature: 9, humidity: 72, latitude: -6.3005, longitude: 106.6527),
-        log(hour: 3, temperature: 10, humidity: 76, latitude: -6.4500, longitude: 107.5000),
-        log(hour: 6, temperature: 11, humidity: 82, latitude: -6.7000, longitude: 108.4500),
-        log(hour: 9, temperature: 10, humidity: 85, latitude: -6.8500, longitude: 109.3500),
-        log(hour: 12, temperature: 10, humidity: 80, latitude: -7.0051, longitude: 110.4381)
-    ]
+    // Preview-only readings, sampled every 10 minutes to make the Swift Charts
+    // line visible in Xcode Canvas. Production uses the real API sensor logs.
+    static let sensorLogs: [SensorLog] = (0..<37).map { index in
+        let minutes = Double(index * 10)
+        let temperature = 9.5 + sin(Double(index) * 0.42) * 1.4
+        let humidity = 86.5 + cos(Double(index) * 0.35) * 3.8
+        let progress = Double(index) / 36
+        let latitude = -6.3005 + ((-7.0051) - (-6.3005)) * progress
+        let longitude = 106.6527 + (110.4381 - 106.6527) * progress
+        return log(minutes: minutes, temperature: temperature, humidity: humidity, latitude: latitude, longitude: longitude)
+    }
 
-    private static func log(hour: Double, temperature: Double, humidity: Double, latitude: Double, longitude: Double) -> SensorLog {
+    private static func log(minutes: Double, temperature: Double, humidity: Double, latitude: Double, longitude: Double) -> SensorLog {
         SensorLog(
             id: UUID(),
             shipmentID: shipment.id,
@@ -294,7 +266,7 @@ enum ShipmentSummaryPreviewData {
             humidity: humidity,
             latitude: [latitude],
             longitude: [longitude],
-            timestamps: startDate.addingTimeInterval(hour * 3_600)
+            timestamps: startDate.addingTimeInterval(minutes * 60)
         )
     }
 }
