@@ -24,7 +24,7 @@ enum DeviceStatus {
     
     var backgroundColor: Color {
         switch self {
-        case .offline: return Color.red
+        case .offline: return Color.theme.offline
         case .warning: return Color.yellow
         case .ideal: return Color.green
         case .delivered: return Color.blue

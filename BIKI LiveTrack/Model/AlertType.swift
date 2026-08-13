@@ -22,3 +22,19 @@ struct AlertType: Identifiable, Codable {
         case description = "alert_types_description"
     }
 }
+
+extension AlertType {
+    var iconName: String {
+        switch title {
+        case "High Humidity": return "humidity.fill"
+        case "Low Humidity": return "humidity"
+        case "Humidity Normalized": return "drop.fill"
+        case "Lost Connection": return "wifi.slash"
+        case "Connection Back": return "wifi"
+        case "High Temperature": return "thermometer.sun"
+        case "Low Temperature": return "thermometer.snowflake"
+        case "Temperature Normalized": return "thermometer.variable"
+        default: return "bell.fill"
+        }
+    }
+}
