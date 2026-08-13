@@ -63,7 +63,6 @@ struct SensorCardShipmentHistoryComponent: View {
                         Text(statusText)
                             .font(.system(size: 16, weight: .semibold))
                             .tracking(-0.31)
-                            .frame(maxWidth: .infinity)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 2)
                             .foregroundColor(statusForegroundColor)
