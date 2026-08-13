@@ -8,37 +8,48 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var selectedTab: AppTab = .home
-    @State private var isSidebarVisible: Bool = false
+    @State private var selectedTab: AppTab? = .home
+    @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
     
     var body: some View {
-        VStack {
-            switch selectedTab {
-            case .home:
-                HomeView()
-            case .shipmentHistory:
-                ShipmentHistoryView()
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            
+            List(AppTab.allCases, id: \.self, selection: $selectedTab) { tab in
+                NavigationLink(value: tab) {
+                    HStack(spacing: 16) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: 18))
+                            .frame(width: 24)
+                        Text(tab.rawValue)
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+            .navigationSplitViewColumnWidth(min: 240, ideal: 260, max: 300)
+            
+        } detail: {
+            
+            NavigationStack {
+                ZStack {
+                    Color.theme.tertiaryGreen.ignoresSafeArea()
+                    
+                    if let selectedTab = selectedTab {
+                        switch selectedTab {
+                        case .home:
+                            HomeView()
+                        case .shipmentHistory:
+                            ShipmentHistoryView()
+                        }
+                    } else {
+                        Text("Pilih menu dari sidebar")
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .navigationBarTitleDisplayMode(.inline)
             }
         }
-        .padding(.top, 80)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.theme.tertiaryGreen.ignoresSafeArea())
-        .overlay(
-            VStack {
-                HStack(alignment: .top) {
-                    if !isSidebarVisible {
-                        Spacer()
-                    }
-                    
-                    AppNavigationBarComponent(selectedTab: $selectedTab, isSidebarVisible: $isSidebarVisible)
-                        .padding(.leading, isSidebarVisible ? 16 : 0)
-                    
-                    Spacer(minLength: 0)
-                }
-                Spacer()
-            }
-            .padding(.top, 16)
-        )
     }
 }
 
