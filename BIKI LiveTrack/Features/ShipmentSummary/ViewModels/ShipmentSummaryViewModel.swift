@@ -92,23 +92,6 @@ final class ShipmentSummaryViewModel: ObservableObject {
         }
     }
 
-    var shipmentIDText: String {
-        "#\(shipment.id.uuidString.prefix(8).uppercased())"
-    }
-
-    var deviceIDText: String { shipment.device.name }
-    var plateNumberText: String { shipment.truckPlateNumber }
-    var contactText: String { "\(shipment.driver.name) \(shipment.driver.phoneNumber)" }
-
-    var destinationText: String {
-        guard let latitude = shipment.endLatitude,
-              let longitude = shipment.endLongitude else { return "In progress" }
-        return String(format: "%.4f, %.4f", latitude, longitude)
-    }
-
-    var temperatureStatusText: String { temperatureIsIdeal ? "Ideal" : "Warning" }
-    var humidityStatusText: String { humidityIsIdeal ? "Ideal" : "Warning" }
-
     func temperatureText(_ value: Double?) -> String { formatted(value, suffix: "°C") }
     func humidityText(_ value: Double?) -> String { formatted(value, suffix: "%") }
     
@@ -161,36 +144,6 @@ final class ShipmentSummaryViewModel: ObservableObject {
             .appendingPathComponent("Shipment_\(shipmentID)_Historical_Log.csv")
         try csv.write(to: url, atomically: true, encoding: .utf8)
         return url
-    }
-
-    func prepareCSVExport() {
-        do {
-            exportURL = try generateCSVURL()
-            isShowingShareSheet = true
-        } catch {
-            errorMessage = "Could not create CSV: \(error.localizedDescription)"
-        }
-    }
-
-    func saveGraphPNG(_ pngData: Data) throws -> URL {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("Shipment_\(shipment.id.uuidString.prefix(8).uppercased())_Historical_Graph.png")
-        try pngData.write(to: url, options: .atomic)
-        return url
-    }
-
-    func prepareGraphExport(_ pngData: Data?) {
-        guard let pngData else {
-            errorMessage = "Could not create graph image."
-            return
-        }
-
-        do {
-            exportURL = try saveGraphPNG(pngData)
-            isShowingShareSheet = true
-        } catch {
-            errorMessage = "Could not save graph image: \(error.localizedDescription)"
-        }
     }
 
     private func average(_ values: [Double]) -> Double? {
