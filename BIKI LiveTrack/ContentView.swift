@@ -23,7 +23,6 @@ struct ContentView: View {
         .padding(.top, 80)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.theme.tertiaryGreen.ignoresSafeArea())
-        
         .overlay(
             VStack {
                 HStack(alignment: .top) {

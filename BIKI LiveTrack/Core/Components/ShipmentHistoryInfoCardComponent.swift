@@ -20,18 +20,27 @@ struct ShipmentHistoryInfoCardComponent: View {
     var body: some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(shipmentID)
-                            .font(.title2.weight(.regular))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-
-                        LocationLabelComponent(
-                            latitude: latitude,
-                            longitude: longitude
-                        )
+                        HStack(alignment: .center, spacing: 12) {
+                            Text(shipmentID)
+                                .font(.app.heading2)
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            
+                            Spacer(minLength: 12)
+                        }
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: "location")
+                                .foregroundStyle(.secondary)
+                            
+                            LocationLabelComponent(
+                                latitude: latitude,
+                                longitude: longitude
+                            )
+                        }
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -40,12 +49,13 @@ struct ShipmentHistoryInfoCardComponent: View {
 
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(statusText)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.green)
+                            .font(.app.captionBold)
+                            .foregroundStyle(Color.theme.primaryGreen)
 
                         Text(statusDate)
-                            .font(.subheadline)
+                            .font(.app.captionBold)
                             .foregroundStyle(.secondary)
+                        
                     }
                 }
 
@@ -55,7 +65,7 @@ struct ShipmentHistoryInfoCardComponent: View {
 
                 HStack(spacing: 0) {
                     ShipmentHistoryInfoItem(
-                        systemImage: "person.circle.fill",
+                        systemImage: "person",
                         text: driverName
                     )
 
@@ -63,7 +73,7 @@ struct ShipmentHistoryInfoCardComponent: View {
 
                     Rectangle()
                         .fill(Color(uiColor: .separator))
-                        .frame(width: 1, height: 24)
+                        .frame(width: 1, height: 28)
 
                     Spacer(minLength: 16)
 
@@ -73,12 +83,6 @@ struct ShipmentHistoryInfoCardComponent: View {
                     )
                 }
             }
-
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.secondary)
-                .padding(.leading, 16)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 18)
@@ -99,7 +103,7 @@ private struct ShipmentHistoryInfoItem: View {
         Label {
             Text(text)
                 .font(.subheadline)
-                .foregroundStyle(.primary)
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         } icon: {
