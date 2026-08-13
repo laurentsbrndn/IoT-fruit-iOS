@@ -11,14 +11,12 @@ enum DeviceStatus {
     case offline
     case warning
     case ideal
-    case delivered
     
     var title: String {
         switch self {
         case .offline: return "Offline"
         case .warning: return "Warning"
         case .ideal: return "Ideal"
-        case .delivered: return "Delivered"
         }
     }
     
@@ -27,7 +25,6 @@ enum DeviceStatus {
         case .offline: return Color.theme.secondaryRed
         case .warning: return Color.theme.secondaryYellow
         case .ideal: return Color.theme.secondaryGreen
-        case .delivered: return Color.theme.secondaryGreen
         }
     }
 
@@ -35,7 +32,7 @@ enum DeviceStatus {
         switch self {
         case .offline: return Color.theme.primaryRed
         case .warning: return Color.theme.primaryYellow
-        case .ideal, .delivered: return Color.theme.primaryGreen
+        case .ideal :  return Color.theme.primaryGreen
         }
     }
     
@@ -53,21 +50,11 @@ enum DeviceStatus {
     }
 }
 struct StatusBadgeComponent: View {
-    let status: DeviceStatus
-    // Kept for compatibility with existing callers. Both sizes intentionally
-    // use the SensorCardShipmentHistoryComponent pill style.
-    var size: BadgeSize = .large
-
-    enum BadgeSize {
-        case small
-        case large
-    }
-    
+    let status: DeviceStatus    
     var body: some View {
         Text(status.title)
-        .font(.system(size: 16, weight: .semibold))
-        .tracking(-0.31)
-        .padding(.horizontal, 12)
+        .font(.app.bodyBold)
+        .padding(.horizontal, 28)
         .padding(.vertical, 2)
         .foregroundColor(status.foregroundColor)
         .background(status.backgroundColor)
