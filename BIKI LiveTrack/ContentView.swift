@@ -22,7 +22,7 @@ struct ContentView: View {
         }
         .padding(.top, 80)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.theme.background.ignoresSafeArea())
+        .background(Color.theme.tertiaryGreen.ignoresSafeArea())
         
         .overlay(
             VStack {

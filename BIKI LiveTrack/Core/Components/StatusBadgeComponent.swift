@@ -24,10 +24,18 @@ enum DeviceStatus {
     
     var backgroundColor: Color {
         switch self {
-        case .offline: return Color.theme.offline
-        case .warning: return Color.yellow
-        case .ideal: return Color.green
-        case .delivered: return Color.blue
+        case .offline: return Color.theme.secondaryRed
+        case .warning: return Color.theme.secondaryYellow
+        case .ideal: return Color.theme.secondaryGreen
+        case .delivered: return Color.theme.secondaryGreen
+        }
+    }
+
+    var foregroundColor: Color {
+        switch self {
+        case .offline: return Color.theme.primaryRed
+        case .warning: return Color.theme.primaryYellow
+        case .ideal, .delivered: return Color.theme.primaryGreen
         }
     }
     
@@ -46,38 +54,22 @@ enum DeviceStatus {
 }
 struct StatusBadgeComponent: View {
     let status: DeviceStatus
-    
+    // Kept for compatibility with existing callers. Both sizes intentionally
+    // use the SensorCardShipmentHistoryComponent pill style.
     var size: BadgeSize = .large
-    
+
     enum BadgeSize {
         case small
         case large
-        
-        var iconFont: Font {
-            self == .small ? .system(size: 12, weight: .bold) : .system(size: 28)
-        }
-        var textFont: Font {
-            self == .small ? .system(size: 13, weight: .semibold) : .system(size: 28, weight: .medium)
-        }
-        var spacing: CGFloat {
-            self == .small ? 6 : 12
-        }
-        var horizontalPadding: CGFloat {
-            self == .small ? 12 : 24
-        }
-        var verticalPadding: CGFloat {
-            self == .small ? 8 : 12
-        }
     }
     
     var body: some View {
-        HStack(spacing: size.spacing) {
-            Text(status.title)
-                .font(size.textFont)
-        }
-        .foregroundColor(.white)
-        .padding(.horizontal, size.horizontalPadding)
-        .padding(.vertical, size.verticalPadding)
+        Text(status.title)
+        .font(.system(size: 16, weight: .semibold))
+        .tracking(-0.31)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 2)
+        .foregroundColor(status.foregroundColor)
         .background(status.backgroundColor)
         .clipShape(Capsule())
     }

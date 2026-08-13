@@ -68,7 +68,7 @@ struct SensorCardActiveShipmentComponent: View {
                 
                 ZStack(alignment: .bottom) {
                     Capsule()
-                        .fill(Color.theme.background)
+                        .fill(Color.theme.tertiaryGreen)
                     
                     VStack {
                         Capsule().fill(Color.gray.opacity(0.3)).frame(width: 8, height: 2).padding(.top, 6)
@@ -94,7 +94,7 @@ struct SensorCardActiveShipmentComponent: View {
 
 #Preview {
     ZStack {
-        Color.theme.background.ignoresSafeArea()
+        Color.theme.tertiaryGreen.ignoresSafeArea()
         
         HStack(spacing: 16) {
             SensorCardActiveShipmentComponent(
@@ -102,7 +102,7 @@ struct SensorCardActiveShipmentComponent: View {
                 value: "10°C",
                 statusIcon: "checkmark.circle.fill",
                 statusText: "Ideal",
-                statusColor: Color.theme.primary,
+                statusColor: Color.theme.primaryGreen,
                 progress: 0.5
             )
             
@@ -111,7 +111,7 @@ struct SensorCardActiveShipmentComponent: View {
                 value: "50%",
                 statusIcon: "exclamationmark.triangle.fill",
                 statusText: "Warning",
-                statusColor: Color.theme.warning,
+                statusColor: Color.theme.primaryYellow,
                 progress: 0.85
             )
         }

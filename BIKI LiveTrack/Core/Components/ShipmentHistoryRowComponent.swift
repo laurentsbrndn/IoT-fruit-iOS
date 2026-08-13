@@ -37,7 +37,7 @@ struct ShipmentHistoryRowComponent: View {
         HStack(alignment: .center, spacing: 16) {
             Text(shipmentID)
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(Color.theme.primary)
+                .foregroundColor(Color.theme.primaryGreen)
                 .frame(width: 110, alignment: .leading)
             
             LocationLabelComponent(latitude: startLatitude, longitude: startLongitude)

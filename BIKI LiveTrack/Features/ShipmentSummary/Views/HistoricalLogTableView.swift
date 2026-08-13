@@ -19,7 +19,7 @@ struct HistoricalLogTableView: View {
             tableHeader
 
             ForEach(Array(sensorLogs.enumerated()), id: \.element.id) { index, log in
-                tableRow(log, background: index.isMultiple(of: 2) ? Color.theme.TableRow1 : Color.theme.TableRow2)
+                tableRow(log, background: index.isMultiple(of: 2) ? Color.white : Color.theme.lightGreen)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -36,7 +36,7 @@ struct HistoricalLogTableView: View {
         .foregroundColor(.white)
         .padding(.horizontal, 24)
         .padding(.vertical, 18)
-        .background(Color.theme.primary)
+        .background(Color.theme.tertiaryGreen)
     }
 
     private func tableRow(_ log: SensorLog, background: Color) -> some View {
@@ -76,6 +76,6 @@ struct HistoricalLogTableView: View {
 #Preview("Historical Log Table", traits: .landscapeLeft) {
     HistoricalLogTableView(sensorLogs: ShipmentSummaryPreviewData.sensorLogs)
         .padding()
-        .background(Color.theme.background)
+        .background(Color.theme.tertiaryGreen)
         .frame(width: 1_100, height: 460)
 }

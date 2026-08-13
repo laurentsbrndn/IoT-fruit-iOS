@@ -52,9 +52,7 @@ struct LocationLabelComponent: View {
 }
 
 #Preview {
-    ZStack {
-        Color.theme.background.ignoresSafeArea()
-        
+    ZStack {        
         VStack(spacing: 16) {
             LocationLabelComponent(latitude: -6.1754, longitude: 106.8272)
                 .padding()

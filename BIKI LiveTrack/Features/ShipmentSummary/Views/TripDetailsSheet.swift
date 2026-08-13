@@ -105,8 +105,8 @@ private struct LocationSummaryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.app.title)
-                .foregroundColor(Color.theme.primary)
+                .font(.app.title1)
+                .foregroundColor(Color.theme.primaryGreen)
             Text(date?.toReadableString() ?? "In progress")
                 .font(.app.bodyBold)
             Text(coordinate.map { String(format: "%.4f, %.4f", $0.latitude, $0.longitude) } ?? "—")
@@ -115,7 +115,7 @@ private struct LocationSummaryCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(Color.theme.FrameCard)
+        .background(Color.theme.grey)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
@@ -163,7 +163,7 @@ private struct RouteMapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             guard let route = overlay as? MKPolyline else { return MKOverlayRenderer(overlay: overlay) }
             let renderer = MKPolylineRenderer(polyline: route)
-            renderer.strokeColor = UIColor(Color.theme.primary)
+            renderer.strokeColor = UIColor(Color.theme.primaryGreen)
             renderer.lineWidth = 7
             return renderer
         }

@@ -59,7 +59,7 @@ struct TripDurationCardComponent: View {
 
 #Preview {
     ZStack {
-        Color.theme.background.ignoresSafeArea()
+        Color.theme.tertiaryGreen.ignoresSafeArea()
         
         TripDurationCardComponent(
             duration: "10:45:09",

@@ -72,7 +72,7 @@ struct ShipmentHistoryView: View {
             .foregroundColor(.white)
             .padding(.vertical, 16)
             .padding(.horizontal, 24)
-            .background(Color.theme.primary)
+            .background(Color.theme.primaryGreen)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal, 32)
             
@@ -96,8 +96,8 @@ struct ShipmentHistoryView: View {
                                     shipmentTime: viewModel.formatTime(shipment.startDate),
                                     arrivalDate: viewModel.formatDate(shipment.endDate ?? Date()),
                                     arrivalTime: viewModel.formatTime(shipment.endDate ?? Date()),
-                                    statusColor: Color.theme.primary,
-                                    rowBackgroundColor: index % 2 == 0 ? Color.theme.TableRow1 : Color.theme.TableRow2,
+                                    statusColor: Color.theme.primaryGreen,
+                                    rowBackgroundColor: index % 2 == 0 ? Color.white : Color.theme.lightGreen,
                                     rawStartDate: shipment.startDate,
                                     rawEndDate: shipment.endDate ?? Date(),
                                     onSaveTime: { newDate, type in
@@ -162,7 +162,7 @@ struct ShipmentHistoryView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 32)
                     .frame(maxWidth: .infinity)
-                    .background(Color.theme.background)
+                    .background(Color.theme.tertiaryGreen)
                     .zIndex(1)
                 }
             }

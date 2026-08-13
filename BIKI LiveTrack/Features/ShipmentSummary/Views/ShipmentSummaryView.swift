@@ -56,7 +56,7 @@ struct ShipmentSummaryView: View {
                         maxValue: viewModel.temperatureText(viewModel.maximumTemperature),
                         statusIcon: "checkmark.circle.fill",
                         statusText: viewModel.temperatureIsIdeal ? "Ideal" : "Warning",
-                        statusColor: viewModel.temperatureIsIdeal ? Color.theme.primary : Color.theme.warning
+                        statusColor: viewModel.temperatureIsIdeal ? Color.theme.primaryGreen : Color.theme.primaryYellow
                     )
 
                     SensorCardShipmentHistoryComponent(
@@ -66,7 +66,7 @@ struct ShipmentSummaryView: View {
                         maxValue: viewModel.humidityText(viewModel.maximumHumidity),
                         statusIcon: "exclamationmark.triangle.fill",
                         statusText: viewModel.humidityIsIdeal ? "Ideal" : "Warning",
-                        statusColor: viewModel.humidityIsIdeal ? Color.theme.primary : Color.theme.warning
+                        statusColor: viewModel.humidityIsIdeal ? Color.theme.primaryGreen : Color.theme.primaryYellow
                     )
 
                     Button {
@@ -109,7 +109,7 @@ struct ShipmentSummaryView: View {
             }
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-            .background(Color.theme.background)
+            .background(Color.theme.tertiaryGreen)
         }
         .task {
             await viewModel.loadSummaryData()
@@ -185,7 +185,7 @@ struct ShipmentSummaryView: View {
         let graph = HistoricalLogGraphView(sensorLogs: viewModel.sensorLogs)
             .frame(width: 1_200)
             .padding(32)
-            .background(Color.theme.background)
+            .background(Color.theme.tertiaryGreen)
 
         let renderer = ImageRenderer(content: graph)
         renderer.scale = UIScreen.main.scale

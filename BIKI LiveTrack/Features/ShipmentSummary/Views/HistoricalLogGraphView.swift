@@ -22,7 +22,7 @@ struct HistoricalLogGraphView: View {
                 targetValue: temperatureTarget,
                 idealRange: 2...14,
                 readings: temperatureReadings,
-                tint: Color.theme.primary
+                tint: Color.theme.primaryGreen
             )
 
             HealthStyleBarChart(
@@ -31,7 +31,7 @@ struct HistoricalLogGraphView: View {
                 targetValue: humidityTarget,
                 idealRange: 85...90,
                 readings: humidityReadings,
-                tint: Color.theme.Update
+                tint: Color.theme.primaryGreen
             )
         }
     }
@@ -68,7 +68,7 @@ private struct HealthStyleBarChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.app.title)
+                .font(.app.title1)
                 .foregroundColor(Color.theme.textPrimary)
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -100,14 +100,25 @@ private struct HealthStyleBarChart: View {
                 ForEach(readings) { reading in
                     // Starting every bar at the target baseline lets it visibly
                     // rise above or fall below the target, like Apple Health.
-                    BarMark(
-                        x: .value("Time", reading.timestamp),
-                        yStart: .value("Target", targetValue),
-                        yEnd: .value("Reading", reading.value),
-                        width: .fixed(9)
-                    )
-                    .foregroundStyle(idealRange.contains(reading.value) ? tint : Color.theme.warning)
-                    .cornerRadius(5)
+                    if idealRange.contains(reading.value) {
+                        BarMark(
+                            x: .value("Time", reading.timestamp),
+                            yStart: .value("Target", targetValue),
+                            yEnd: .value("Reading", reading.value),
+                            width: .fixed(9)
+                        )
+                        .foregroundStyle(tint)
+                        .cornerRadius(5)
+                    } else {
+                        BarMark(
+                            x: .value("Time", reading.timestamp),
+                            yStart: .value("Target", targetValue),
+                            yEnd: .value("Reading", reading.value),
+                            width: .fixed(9)
+                        )
+                        .foregroundStyle(Color.theme.primaryYellow)
+                        .cornerRadius(5)
+                    }
                 }
             }
             .chartYScale(domain: yDomain)
@@ -164,6 +175,6 @@ private struct HealthStyleBarChart: View {
         HistoricalLogGraphView(sensorLogs: ShipmentSummaryPreviewData.sensorLogs)
             .padding()
     }
-    .background(Color.theme.background)
+    .background(Color.theme.tertiaryGreen)
     .frame(width: 1_100, height: 460)
 }
