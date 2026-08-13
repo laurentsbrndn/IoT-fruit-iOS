@@ -9,98 +9,114 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
-
-    let historyCardWidth: CGFloat = 420
-    let liveColumnWidth: CGFloat = 360
-
+    
+    // State untuk merekam jejak lebar maksimal dari layar secara dinamis
+    @State private var maxScreenWidth: CGFloat = 0
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 32) {
-
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Recently Delivered (\(viewModel.deliveredShipments.count))")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(Color.theme.textPrimary)
-                    .padding(.horizontal, 24)
-
-                if viewModel.isLoading && viewModel.deliveredShipments.isEmpty {
-                    ProgressView()
-                        .padding(.top, 20)
+        GeometryReader { geometry in
+            // Kalkulasi lebar dinamis dengan BATAS MINIMUM (mencegah shrink)
+            // Jika layar menyempit, kolom tidak akan lebih kecil dari 320
+            let dynamicLiveColumnWidth = max(320, (geometry.size.width - 80) / 3)
+            
+            // Kartu history tidak akan lebih kecil dari 360
+            let dynamicHistoryCardWidth = max(360, geometry.size.width * 0.38)
+            
+            VStack(alignment: .leading, spacing: 32) {
+                // ... (Sisa kode HomeView Anda biarkan sama persis)
+                
+                // MARK: - Recently Delivered Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Recently Delivered (\(viewModel.deliveredShipments.count))")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(Color.theme.textPrimary)
                         .padding(.horizontal, 24)
-                } else if viewModel.deliveredShipments.isEmpty {
-                    Text("No delivered shipments yet.")
-                        .foregroundColor(Color.theme.textSecondary)
-                        .padding(.horizontal, 24)
-                } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(viewModel.deliveredShipments) { shipment in
-                                ShipmentHistoryInfoCardComponent(
-                                    shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
-                                    statusText: "Delivered",
-                                    statusDate: formatShipmentDate(shipment.endDate),
-                                    latitude: shipment.endLatitude ?? 0.0,
-                                    longitude: shipment.endLongitude ?? 0.0,
-                                    driverName: shipment.driver.name,
-                                    driverContact: shipment.driver.phoneNumber
-                                )
-                                .frame(width: historyCardWidth)
+                    
+                    if viewModel.isLoading && viewModel.deliveredShipments.isEmpty {
+                        ProgressView()
+                            .padding(.top, 20)
+                            .padding(.horizontal, 24)
+                    } else if viewModel.deliveredShipments.isEmpty {
+                        Text("No delivered shipments yet.")
+                            .foregroundColor(Color.theme.textSecondary)
+                            .padding(.horizontal, 24)
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                ForEach(viewModel.deliveredShipments) { shipment in
+                                    ShipmentHistoryInfoCardComponent(
+                                        shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
+                                        statusText: "Delivered",
+                                        statusDate: formatShipmentDate(shipment.endDate),
+                                        latitude: shipment.endLatitude ?? 0.0,
+                                        longitude: shipment.endLongitude ?? 0.0,
+                                        driverName: shipment.driver.name,
+                                        driverContact: shipment.driver.phoneNumber
+                                    )
+                                    // Menggunakan lebar dinamis hasil GeometryReader
+                                    .frame(width: dynamicHistoryCardWidth)
+                                }
                             }
+                            .padding(.horizontal, 24)
                         }
-                        .padding(.horizontal, 24)
                     }
                 }
-            }
-            .padding(.top, 16)
-
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Currently Live")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(Color.theme.textPrimary)
-                    .padding(.horizontal, 24)
-
-                if viewModel.isLoading && viewModel.activeShipments.isEmpty {
-                    ProgressView()
-                        .padding(.top, 20)
+                .padding(.top, 16)
+                
+                // MARK: - Currently Live Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Currently Live")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(Color.theme.textPrimary)
                         .padding(.horizontal, 24)
-                } else if viewModel.activeShipments.isEmpty {
-                    Text("No active shipments at the moment.")
-                        .foregroundColor(Color.theme.textSecondary)
-                        .padding(.horizontal, 24)
-                } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 16) {
-                            
-                            liveColumnView(
-                                title: "All systems in ideal conditions",
-                                dotColor: Color.theme.primaryGreen,
-                                count: idealShipments.count,
-                                shipments: idealShipments
-                            )
-                            
-                            liveColumnView(
-                                title: "Need attentions",
-                                dotColor: Color.theme.primaryYellow,
-                                count: warningShipments.count,
-                                shipments: warningShipments
-                            )
-                            
-                            liveColumnView(
-                                title: "Devices are not connected",
-                                dotColor: Color.theme.primaryRed,
-                                count: offlineShipments.count,
-                                shipments: offlineShipments,
-                                isCountHighlighted: true
-                            )
+                    
+                    if viewModel.isLoading && viewModel.activeShipments.isEmpty {
+                        ProgressView()
+                            .padding(.top, 20)
+                            .padding(.horizontal, 24)
+                    } else if viewModel.activeShipments.isEmpty {
+                        Text("No active shipments at the moment.")
+                            .foregroundColor(Color.theme.textSecondary)
+                            .padding(.horizontal, 24)
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(alignment: .top, spacing: 16) {
+                                
+                                liveColumnView(
+                                    title: "All systems in ideal conditions",
+                                    dotColor: Color.theme.primaryGreen,
+                                    count: idealShipments.count,
+                                    shipments: idealShipments,
+                                    columnWidth: dynamicLiveColumnWidth // Passing calculated width
+                                )
+                                
+                                liveColumnView(
+                                    title: "Need attentions",
+                                    dotColor: Color.theme.primaryYellow,
+                                    count: warningShipments.count,
+                                    shipments: warningShipments,
+                                    columnWidth: dynamicLiveColumnWidth
+                                )
+                                
+                                liveColumnView(
+                                    title: "Devices are not connected",
+                                    dotColor: Color.theme.primaryRed,
+                                    count: offlineShipments.count,
+                                    shipments: offlineShipments,
+                                    isCountHighlighted: true,
+                                    columnWidth: dynamicLiveColumnWidth
+                                )
+                            }
+                            .padding(.horizontal, 24)
+                            .frame(maxHeight: .infinity)
                         }
-                        .padding(.horizontal, 24)
-                        .frame(maxHeight: .infinity)
                     }
                 }
+                .frame(maxHeight: .infinity)
             }
-            .frame(maxHeight: .infinity)
+            .padding(.bottom, 24)
+            .background(Color.clear)
         }
-        .padding(.bottom, 24)
-        .background(Color.clear)
         .refreshable {
             await viewModel.loadHomeData()
         }
@@ -124,8 +140,9 @@ struct HomeView: View {
         }
     }
     
+    // Menambahkan parameter columnWidth agar ukurannya mengikuti GeometryReader
     @ViewBuilder
-    private func liveColumnView(title: String, dotColor: Color, count: Int, shipments: [Shipment], isCountHighlighted: Bool = false) -> some View {
+    private func liveColumnView(title: String, dotColor: Color, count: Int, shipments: [Shipment], isCountHighlighted: Bool = false, columnWidth: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
                 Circle()
@@ -158,7 +175,7 @@ struct HomeView: View {
         .padding(16)
         .background(Color.theme.FrameCard)
         .cornerRadius(16)
-        .frame(width: liveColumnWidth)
+        .frame(width: columnWidth) // Menggunakan variabel dinamis dari parameter
         .frame(maxHeight: .infinity)
     }
     
@@ -173,24 +190,24 @@ struct HomeView: View {
     private var offlineShipments: [Shipment] {
         viewModel.activeShipments.filter { String(describing: viewModel.shipmentStatuses[$0.id]).lowercased().contains("offline") }
     }
-
+    
     private func formatShipmentDate(_ date: Date?) -> String {
         guard let date else {
             return "—"
         }
-
+        
         let calendar = Calendar.current
-
+        
         if calendar.isDateInToday(date) {
             let time = date.formatted(
                 .dateTime
                     .hour(.twoDigits(amPM: .omitted))
                     .minute(.twoDigits)
             )
-
+            
             return "Today, \(time)"
         }
-
+        
         return date.formatted(
             .dateTime
                 .day(.twoDigits)

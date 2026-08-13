@@ -1,22 +1,15 @@
 //
-//  Untitled.swift
+//  TripDetailsSheet.swift
 //  BIKI LiveTrack
 //
 //  Created by Joana Mardas on 13/08/26.
-//
-//
-//  TripDetailsSheet.swift
-//  BIKI LiveTrack
 //
 
 import SwiftUI
 import MapKit
 
 struct TripDetailsSheet: View {
-    let shipment: Shipment
-    let duration: String
-    let locationLogs: [SensorLog]
-
+    @ObservedObject var viewModel: ShipmentSummaryViewModel
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -41,16 +34,16 @@ struct TripDetailsSheet: View {
 
             ZStack(alignment: .top) {
                 RouteMapView(
-                    startCoordinate: startCoordinate,
-                    endCoordinate: endCoordinate,
-                    routeCoordinates: routeCoordinates
+                    startCoordinate: viewModel.startCoordinate,
+                    endCoordinate: viewModel.endCoordinate,
+                    routeCoordinates: viewModel.routeCoordinates
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 20))
 
                 VStack(spacing: 4) {
                     Text("Trip Duration")
                         .font(.app.bodyBold)
-                    Text(duration)
+                    Text(viewModel.tripDuration)
                         .font(.system(size: 38, weight: .regular))
                         .monospacedDigit()
                 }
@@ -64,36 +57,19 @@ struct TripDetailsSheet: View {
             HStack(alignment: .top, spacing: 16) {
                 LocationSummaryCard(
                     title: "Start Location",
-                    date: shipment.startDate,
-                    coordinate: startCoordinate
+                    date: viewModel.shipment.startDate,
+                    coordinate: viewModel.startCoordinate
                 )
                 LocationSummaryCard(
                     title: "End Location",
-                    date: shipment.endDate,
-                    coordinate: endCoordinate
+                    date: viewModel.shipment.endDate,
+                    coordinate: viewModel.endCoordinate
                 )
             }
         }
         .padding(24)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-    }
-
-    private var startCoordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: shipment.startLatitude, longitude: shipment.startLongitude)
-    }
-
-    private var endCoordinate: CLLocationCoordinate2D? {
-        guard let latitude = shipment.endLatitude, let longitude = shipment.endLongitude else { return nil }
-        return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-    }
-
-    private var routeCoordinates: [CLLocationCoordinate2D] {
-        let readings = locationLogs.compactMap { log -> CLLocationCoordinate2D? in
-            guard let latitude = log.averageLatitude, let longitude = log.averageLongitude else { return nil }
-            return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        }
-        return [startCoordinate] + readings + (endCoordinate.map { [$0] } ?? [])
     }
 }
 
@@ -107,11 +83,21 @@ private struct LocationSummaryCard: View {
             Text(title)
                 .font(.app.title1)
                 .foregroundColor(Color.theme.primaryGreen)
+            
             Text(date?.toReadableString() ?? "In progress")
                 .font(.app.bodyBold)
-            Text(coordinate.map { String(format: "%.4f, %.4f", $0.latitude, $0.longitude) } ?? "—")
-                .font(.app.caption)
-                .foregroundColor(Color.theme.textSecondary)
+            
+            // Perubahan ada di blok ini:
+            // Menggunakan LocationLabelComponent untuk mendapatkan nama lokasi
+            if let coord = coordinate {
+                LocationLabelComponent(latitude: coord.latitude, longitude: coord.longitude)
+                    .font(.app.caption)
+                    .foregroundColor(Color.theme.textSecondary)
+            } else {
+                Text("—")
+                    .font(.app.caption)
+                    .foregroundColor(Color.theme.textSecondary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
@@ -168,13 +154,4 @@ private struct RouteMapView: UIViewRepresentable {
             return renderer
         }
     }
-}
-
-#Preview("Trip Details", traits: .landscapeLeft) {
-    TripDetailsSheet(
-        shipment: ShipmentSummaryPreviewData.shipment,
-        duration: "15:55:00",
-        locationLogs: ShipmentSummaryPreviewData.sensorLogs
-    )
-    .frame(width: 1_050, height: 720)
 }

@@ -7,54 +7,29 @@ import SwiftUI
 import Charts
 
 struct HistoricalLogGraphView: View {
-    let sensorLogs: [SensorLog]
-
-    // For a recommended range, the chart's baseline is its midpoint.
-    // Bars above/below it clearly show movement away from the target.
-    private let temperatureTarget = 8.0
-    private let humidityTarget = 87.5
+    @ObservedObject var viewModel: ShipmentSummaryViewModel
 
     var body: some View {
         VStack(spacing: 20) {
             HealthStyleBarChart(
                 title: "Temperature over time",
                 unit: "°C",
-                targetValue: temperatureTarget,
-                idealRange: 2...14,
-                readings: temperatureReadings,
+                targetValue: viewModel.temperatureTarget,
+                idealRange: viewModel.temperatureIdealRange,
+                readings: viewModel.temperatureReadings,
                 tint: Color.theme.primaryGreen
             )
 
             HealthStyleBarChart(
                 title: "Humidity over time",
                 unit: "%",
-                targetValue: humidityTarget,
-                idealRange: 85...90,
-                readings: humidityReadings,
+                targetValue: viewModel.humidityTarget,
+                idealRange: viewModel.humidityIdealRange,
+                readings: viewModel.humidityReadings,
                 tint: Color.theme.primaryGreen
             )
         }
     }
-
-    private var temperatureReadings: [HistoricalMetricReading] {
-        sensorLogs.compactMap { log in
-            guard let timestamp = log.timestamps, let value = log.temperature else { return nil }
-            return HistoricalMetricReading(id: log.id, timestamp: timestamp, value: value)
-        }
-    }
-
-    private var humidityReadings: [HistoricalMetricReading] {
-        sensorLogs.compactMap { log in
-            guard let timestamp = log.timestamps, let value = log.humidity else { return nil }
-            return HistoricalMetricReading(id: log.id, timestamp: timestamp, value: value)
-        }
-    }
-}
-
-private struct HistoricalMetricReading: Identifiable {
-    let id: UUID
-    let timestamp: Date
-    let value: Double
 }
 
 private struct HealthStyleBarChart: View {
@@ -81,8 +56,6 @@ private struct HealthStyleBarChart: View {
             }
 
             Chart {
-                // A quiet coloured band is the ideal zone. It stays inside the
-                // chart's plot area, unlike an annotation that can be clipped.
                 RectangleMark(
                     yStart: .value("Ideal minimum", idealRange.lowerBound),
                     yEnd: .value("Ideal maximum", idealRange.upperBound)
@@ -98,8 +71,6 @@ private struct HealthStyleBarChart: View {
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
 
                 ForEach(readings) { reading in
-                    // Starting every bar at the target baseline lets it visibly
-                    // rise above or fall below the target, like Apple Health.
                     if idealRange.contains(reading.value) {
                         BarMark(
                             x: .value("Time", reading.timestamp),
@@ -168,13 +139,4 @@ private struct HealthStyleBarChart: View {
     private func formatted(_ value: Double) -> String {
         value.rounded() == value ? String(Int(value)) : String(format: "%.1f", value)
     }
-}
-
-#Preview("Historical Log Graph", traits: .landscapeLeft) {
-    ScrollView {
-        HistoricalLogGraphView(sensorLogs: ShipmentSummaryPreviewData.sensorLogs)
-            .padding()
-    }
-    .background(Color.theme.tertiaryGreen)
-    .frame(width: 1_100, height: 460)
 }
