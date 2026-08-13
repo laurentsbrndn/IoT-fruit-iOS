@@ -53,7 +53,7 @@ struct TripDurationCardComponent: View {
         }
         .padding(24)
         .background(Color.white)
-        .cornerRadius(24)
+        .cornerRadius(15)
     }
 }
 

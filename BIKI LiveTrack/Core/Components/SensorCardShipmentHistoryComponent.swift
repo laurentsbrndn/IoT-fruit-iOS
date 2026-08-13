@@ -15,72 +15,105 @@ struct SensorCardShipmentHistoryComponent: View {
     var statusIcon: String
     var statusText: String
     var statusColor: Color
+
+    var statusBackgroundColor: Color {
+        switch statusText.lowercased() {
+        case "warning":
+            return Color.theme.secondaryYellow
+        case "offline":
+            return Color.theme.secondaryRed
+        default:
+            return Color.theme.secondaryGreen
+        }
+    }
+
+    var statusForegroundColor: Color {
+        switch statusText.lowercased() {
+        case "warning":
+            return Color.theme.primaryYellow
+        case "offline":
+            return Color.theme.primaryRed
+        default:
+            return Color.theme.primaryGreen
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(Color.theme.textSecondary)
+                .font(.system(size: 20, weight: .semibold))
+                .tracking(-0.45)
+                .foregroundColor(Color.theme.textPrimary)
             
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Average")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 15, weight: .semibold))
+                        .tracking(-0.23)
                         .foregroundColor(Color.theme.textSecondary)
                     
-                    Text(averageValue)
-                        .font(.system(size: 42, weight: .regular))
-                        .foregroundColor(Color.theme.textPrimary)
-                    
-                    HStack(spacing: 6) {
-                        Image(systemName: statusIcon)
-                            .font(.system(size: 12, weight: .bold))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(averageValue)
+                            .font(.system(size: 45, weight: .bold))
+                            .tracking(0.4)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                            .foregroundColor(Color.theme.textPrimary)
+
                         Text(statusText)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
+                            .tracking(-0.31)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 2)
+                            .foregroundColor(statusForegroundColor)
+                            .background(statusBackgroundColor)
+                            .clipShape(Capsule())
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(statusColor)
-                    .foregroundColor(.white)
-                    .clipShape(Capsule())
-                    .padding(.top, 4)
                 }
+                .frame(width: 155, alignment: .leading)
                 
-                Spacer()
+                Spacer(minLength: 16)
                 
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Min")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 15, weight: .semibold))
+                            .tracking(-0.23)
                             .foregroundColor(Color.theme.textSecondary)
                         
                         Text(minValue)
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold))
+                            .tracking(-0.43)
                             .foregroundColor(Color.theme.textPrimary)
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Max")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 15, weight: .semibold))
+                            .tracking(-0.23)
                             .foregroundColor(Color.theme.textSecondary)
                         
                         Text(maxValue)
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold))
+                            .tracking(-0.43)
                             .foregroundColor(Color.theme.textPrimary)
                     }
                 }
-                .padding(.trailing, 8)
+                .frame(width: 60, alignment: .leading)
             }
         }
-        .padding(20)
+        .padding(24)
+        .frame(width: 300, height: 209)
         .background(Color.white)
-        .cornerRadius(24)
+        .cornerRadius(15)
+        .shadow(color: .black.opacity(0.1), radius: 4, y: 4)
     }
 }
 
 #Preview {
     ZStack {
-        Color.theme.background.ignoresSafeArea()
+        Color.theme.tertiaryGreen.ignoresSafeArea()
         
         HStack(spacing: 16) {
             SensorCardShipmentHistoryComponent(
@@ -90,17 +123,17 @@ struct SensorCardShipmentHistoryComponent: View {
                 maxValue: "14°C",
                 statusIcon: "checkmark.circle.fill",
                 statusText: "Ideal",
-                statusColor: Color.theme.primary
+                statusColor: Color.theme.primaryGreen
             )
             
             SensorCardShipmentHistoryComponent(
                 title: "Humidity",
-                averageValue: "70%",
-                minValue: "68%",
-                maxValue: "75%",
+                averageValue: "80%",
+                minValue: "75%",
+                maxValue: "85%",
                 statusIcon: "checkmark.circle.fill",
-                statusText: "Ideal",
-                statusColor: Color.theme.primary
+                statusText: "Warning",
+                statusColor: Color.theme.primaryYellow
             )
         }
         .padding()
