@@ -17,6 +17,9 @@ final class ShipmentSummaryViewModel: ObservableObject {
     @Published private(set) var sensorLogs: [SensorLog] = []
     @Published private(set) var isLoading = false
     @Published var errorMessage: String?
+    @Published var selectedLogDisplay: HistoricalLogDisplay = .graph
+    @Published var exportURL: URL?
+    @Published var isShowingShareSheet = false
 
     let shipment: Shipment
     private let sensorLogRepository: SensorLogRepositoryProtocol
@@ -76,6 +79,23 @@ final class ShipmentSummaryViewModel: ObservableObject {
         return String(format: "%02d:%02d:%02d", seconds / 3_600, (seconds % 3_600) / 60, seconds % 60)
     }
 
+    var shipmentIDText: String {
+        "#\(shipment.id.uuidString.prefix(8).uppercased())"
+    }
+
+    var deviceIDText: String { shipment.device.name }
+    var plateNumberText: String { shipment.truckPlateNumber }
+    var contactText: String { "\(shipment.driver.name) \(shipment.driver.phoneNumber)" }
+
+    var destinationText: String {
+        guard let latitude = shipment.endLatitude,
+              let longitude = shipment.endLongitude else { return "In progress" }
+        return String(format: "%.4f, %.4f", latitude, longitude)
+    }
+
+    var temperatureStatusText: String { temperatureIsIdeal ? "Ideal" : "Warning" }
+    var humidityStatusText: String { humidityIsIdeal ? "Ideal" : "Warning" }
+
     func temperatureText(_ value: Double?) -> String { formatted(value, suffix: "°C") }
     func humidityText(_ value: Double?) -> String { formatted(value, suffix: "%") }
 
@@ -99,6 +119,36 @@ final class ShipmentSummaryViewModel: ObservableObject {
             .appendingPathComponent("Shipment_\(shipmentID)_Historical_Log.csv")
         try csv.write(to: url, atomically: true, encoding: .utf8)
         return url
+    }
+
+    func prepareCSVExport() {
+        do {
+            exportURL = try generateCSVURL()
+            isShowingShareSheet = true
+        } catch {
+            errorMessage = "Could not create CSV: \(error.localizedDescription)"
+        }
+    }
+
+    func saveGraphPNG(_ pngData: Data) throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("Shipment_\(shipment.id.uuidString.prefix(8).uppercased())_Historical_Graph.png")
+        try pngData.write(to: url, options: .atomic)
+        return url
+    }
+
+    func prepareGraphExport(_ pngData: Data?) {
+        guard let pngData else {
+            errorMessage = "Could not create graph image."
+            return
+        }
+
+        do {
+            exportURL = try saveGraphPNG(pngData)
+            isShowingShareSheet = true
+        } catch {
+            errorMessage = "Could not save graph image: \(error.localizedDescription)"
+        }
     }
 
     private func average(_ values: [Double]) -> Double? {

@@ -18,9 +18,19 @@ struct TripDetailsSheet: View {
     let locationLogs: [SensorLog]
 
     @Environment(\.dismiss) private var dismiss
+    @State private var startDate: Date
+    @State private var endDate: Date
+
+    init(shipment: Shipment, duration: String, locationLogs: [SensorLog]) {
+        self.shipment = shipment
+        self.duration = duration
+        self.locationLogs = locationLogs
+        _startDate = State(initialValue: shipment.startDate)
+        _endDate = State(initialValue: shipment.endDate ?? shipment.startDate)
+    }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 10) {
             HStack {
                 Button("Close", systemImage: "xmark") {
                     dismiss()
@@ -49,34 +59,40 @@ struct TripDetailsSheet: View {
 
                 VStack(spacing: 4) {
                     Text("Trip Duration")
-                        .font(.app.bodyBold)
-                    Text(duration)
-                        .font(.system(size: 38, weight: .regular))
+                        .font(.system(size: 20, weight: .regular))
+                    Text(updatedDuration)
+                        .font(.system(size: 34, weight: .regular))
                         .monospacedDigit()
                 }
-                .padding(.horizontal, 28)
-                .padding(.vertical, 12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .frame(width: 214, height: 92)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15))
                 .padding(.top, 18)
             }
-            .frame(minHeight: 350)
+            .frame(minHeight: 350, maxHeight: .infinity)
 
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: 18) {
                 LocationSummaryCard(
                     title: "Start Location",
-                    date: shipment.startDate,
+                    date: $startDate,
                     coordinate: startCoordinate
                 )
                 LocationSummaryCard(
                     title: "End Location",
-                    date: shipment.endDate,
+                    date: $endDate,
+                    minimumDate: startDate,
                     coordinate: endCoordinate
                 )
             }
         }
-        .padding(24)
+        .padding(.horizontal, 40)
+        .padding(.bottom, 24)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .onChange(of: startDate) { _, newStartDate in
+            if endDate < newStartDate {
+                endDate = newStartDate
+            }
+        }
     }
 
     private var startCoordinate: CLLocationCoordinate2D {
@@ -95,28 +111,119 @@ struct TripDetailsSheet: View {
         }
         return [startCoordinate] + readings + (endCoordinate.map { [$0] } ?? [])
     }
+
+    private var updatedDuration: String {
+        let seconds = max(0, Int(endDate.timeIntervalSince(startDate)))
+        return String(format: "%02d:%02d:%02d", seconds / 3_600, (seconds % 3_600) / 60, seconds % 60)
+    }
 }
 
 private struct LocationSummaryCard: View {
     let title: String
-    let date: Date?
+    @Binding var date: Date
+    var minimumDate: Date? = nil
     let coordinate: CLLocationCoordinate2D?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 16) {
             Text(title)
-                .font(.app.title1)
+                .font(.system(size: 20, weight: .semibold))
+                .tracking(-0.45)
                 .foregroundColor(Color.theme.primaryGreen)
-            Text(date?.toReadableString() ?? "In progress")
-                .font(.app.bodyBold)
-            Text(coordinate.map { String(format: "%.4f, %.4f", $0.latitude, $0.longitude) } ?? "—")
-                .font(.app.caption)
-                .foregroundColor(Color.theme.textSecondary)
+
+            HStack(spacing: 16) {
+                Image(systemName: "clock.fill")
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundColor(Color.theme.primaryGreen)
+
+                EditableDateControl(date: $date, minimumDate: minimumDate)
+            }
+
+            HStack(alignment: .top, spacing: 16) {
+                Image(systemName: "mappin")
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundColor(Color.theme.primaryGreen)
+
+                Text(coordinate.map { String(format: "%.4f, %.4f", $0.latitude, $0.longitude) } ?? "—")
+                    .font(.system(size: 20, weight: .regular))
+                    .tracking(-0.45)
+                    .foregroundColor(Color.theme.textPrimary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
-        .background(Color.theme.grey)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .frame(minHeight: 160)
+        .padding(24)
+        .background(Color.white.opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 15))
+        .shadow(color: .black.opacity(0.1), radius: 4, y: 4)
+    }
+}
+
+private struct EditableDateControl: View {
+    @Binding var date: Date
+    let minimumDate: Date?
+
+    @State private var isShowingCalendar = false
+
+    var body: some View {
+        Button {
+            isShowingCalendar = true
+        } label: {
+            HStack(spacing: 10) {
+                Text(date.toReadableString())
+                    .font(.system(size: 17, weight: .regular))
+                    .foregroundColor(Color.theme.textPrimary)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Color.theme.textSecondary)
+            }
+            .padding(.horizontal, 11)
+            .padding(.vertical, 6)
+            .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $isShowingCalendar, arrowEdge: .bottom) {
+            VStack(spacing: 12) {
+                DatePicker(
+                    "Date",
+                    selection: $date,
+                    in: availableDates,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+
+                Divider()
+
+                HStack {
+                    Text("Time")
+                        .font(.app.body)
+                        .foregroundColor(Color.theme.textPrimary)
+
+                    Spacer()
+
+                    DatePicker(
+                        "Time",
+                        selection: $date,
+                        in: availableDates,
+                        displayedComponents: .hourAndMinute
+                    )
+                    .datePickerStyle(.compact)
+                    .labelsHidden()
+                    .tint(Color.theme.primaryGreen)
+                }
+            }
+            .padding(16)
+            .frame(width: 360)
+        }
+        .accessibilityLabel("Edit date and time")
+    }
+
+    private var availableDates: PartialRangeFrom<Date> {
+        minimumDate.map { $0... } ?? Date.distantPast...
     }
 }
 

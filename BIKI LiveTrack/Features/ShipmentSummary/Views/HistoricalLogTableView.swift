@@ -18,7 +18,7 @@ struct HistoricalLogTableView: View {
         VStack(spacing: 0) {
             tableHeader
 
-            ForEach(Array(sensorLogs.enumerated()), id: \.element.id) { index, log in
+        ForEach(Array(sensorLogs.enumerated()), id: \.element.id) { index, log in
                 tableRow(log, background: index.isMultiple(of: 2) ? Color.white : Color.theme.lightGreen)
             }
         }
@@ -36,7 +36,7 @@ struct HistoricalLogTableView: View {
         .foregroundColor(.white)
         .padding(.horizontal, 24)
         .padding(.vertical, 18)
-        .background(Color.theme.tertiaryGreen)
+        .background(Color.theme.primaryGreen)
     }
 
     private func tableRow(_ log: SensorLog, background: Color) -> some View {
