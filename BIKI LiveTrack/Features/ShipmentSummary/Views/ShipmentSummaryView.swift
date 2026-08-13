@@ -18,7 +18,6 @@ enum HistoricalLogDisplay: String, CaseIterable, Identifiable {
 
 struct ShipmentSummaryView: View {
     @StateObject private var viewModel: ShipmentSummaryViewModel
-    @State private var selectedLogDisplay: HistoricalLogDisplay = .graph
     @State private var isShowingTripDetails = false
     @State private var exportURL: URL?
     @State private var isShowingShareSheet = false
@@ -125,8 +124,8 @@ struct ShipmentSummaryView: View {
         .sheet(isPresented: $isShowingTripDetails) {
             TripDetailsSheet(viewModel: viewModel)
         }
-        .sheet(isPresented: $isShowingShareSheet) {
-            if let exportURL {
+        .sheet(isPresented: $viewModel.isShowingShareSheet) {
+            if let exportURL = viewModel.exportURL {
                 ActivitySheet(activityItems: [exportURL])
             }
         }
@@ -135,7 +134,7 @@ struct ShipmentSummaryView: View {
     private var shipmentHeader: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top) {
-                Text("#\(viewModel.shipment.id.uuidString.prefix(8).uppercased())")
+                Text(viewModel.shipmentIDText)
                     .font(.system(size: 46, weight: .bold))
                     .foregroundColor(Color.theme.textPrimary)
                 
@@ -167,7 +166,7 @@ struct ShipmentSummaryView: View {
     private var exportMenu: some View {
         Menu {
             Button {
-                exportCSV()
+                viewModel.prepareCSVExport()
             } label: {
                 Label("Export Data\nAs CSV", systemImage: "square.and.arrow.up")
             }
@@ -251,7 +250,7 @@ private struct HeaderDetail: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.app.body)
-                .foregroundColor(Color.theme.textSecondary)
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(.app.bodyBold)
                 .foregroundColor(Color.theme.textPrimary)

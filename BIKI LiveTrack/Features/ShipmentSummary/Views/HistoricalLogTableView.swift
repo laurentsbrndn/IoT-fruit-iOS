@@ -36,7 +36,7 @@ struct HistoricalLogTableView: View {
         .foregroundColor(.white)
         .padding(.horizontal, 24)
         .padding(.vertical, 18)
-        .background(Color.theme.tertiaryGreen)
+        .background(Color.theme.primaryGreen)
     }
 
     private func tableRow(_ log: SensorLog, background: Color) -> some View {
