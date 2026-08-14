@@ -45,6 +45,8 @@ final class LiveShipmentViewModel: ObservableObject {
             async let fetchAlerts = alertLogRepository.fetchAlerts(byShipmentID: shipment.id.uuidString)
             
             let (logs, alertLogs) = try await (fetchSensors, fetchAlerts)
+            print("Sensor Logs count: \(logs.count)")
+            print("Alert Logs count: \(alertLogs.count)") // Cek apakah bernilai 0
             
             self.sensorLogs = logs.sorted {
                 ($0.timestamps ?? .distantPast) < ($1.timestamps ?? .distantPast)
@@ -105,7 +107,6 @@ final class LiveShipmentViewModel: ObservableObject {
         return humidityIsIdeal ? .ideal : .warning
     }
 
-    // MARK: - Computed Properties untuk UI Header & Text (Simple Mock Text)
     
     var shipmentIDText: String {
         "#\(shipment.id.uuidString.prefix(8).uppercased())"

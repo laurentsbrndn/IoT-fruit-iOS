@@ -184,11 +184,46 @@ private final class LiveShipmentPreviewSensorLogRepository: SensorLogRepositoryP
 
 private final class LiveShipmentPreviewAlertLogRepository: AlertLogRepositoryProtocol {
     func fetchAllAlerts() async throws -> [AlertLog] {
-        []
+        mockAlerts
     }
 
     func fetchAlerts(byShipmentID shipmentID: String) async throws -> [AlertLog] {
-        []
+        mockAlerts
+    }
+
+    private var mockAlerts: [AlertLog] {
+        guard let sensorLog = LiveShipmentPreviewData.sensorLogs.first else { return [] }
+        
+        return [
+            AlertLog(
+                id: UUID(),
+                alertType: .highTemperature,
+                shipmentID: LiveShipmentPreviewData.shipment.id,
+                sensorLogID: sensorLog.id,
+                timestamps: Date().addingTimeInterval(-600)
+            ),
+            AlertLog(
+                id: UUID(),
+                alertType: .lowHumidity,
+                shipmentID: LiveShipmentPreviewData.shipment.id,
+                sensorLogID: sensorLog.id,
+                timestamps: Date().addingTimeInterval(-3600)
+            ),
+            AlertLog(
+                id: UUID(),
+                alertType: .connectionBack,
+                shipmentID: LiveShipmentPreviewData.shipment.id,
+                sensorLogID: sensorLog.id,
+                timestamps: Date().addingTimeInterval(-3600)
+                ),
+            AlertLog(
+                id: UUID(),
+                alertType: .lostConnection,
+                shipmentID: LiveShipmentPreviewData.shipment.id,
+                sensorLogID: sensorLog.id,
+                timestamps: Date().addingTimeInterval(-3600)
+                )
+        ]
     }
 }
 
@@ -201,3 +236,4 @@ private final class LiveShipmentPreviewAlertLogRepository: AlertLogRepositoryPro
         )
     }
 }
+
