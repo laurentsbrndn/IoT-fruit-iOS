@@ -274,7 +274,8 @@ private struct HeaderLocationDetail: View {
                 .foregroundColor(Color.theme.textSecondary)
             
             LocationLabelComponent(latitude: latitude, longitude: longitude)
-                // Styling dibuat semirip mungkin dengan teks "value" di HeaderDetail
+                
+            
                 .font(.app.bodyBold)
                 .foregroundColor(Color.theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
