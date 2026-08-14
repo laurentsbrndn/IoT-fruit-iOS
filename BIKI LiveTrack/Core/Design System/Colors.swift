@@ -48,7 +48,7 @@ struct AppTheme {
     let secondaryRed = Color(hex: "FFC5C6") // bg offline
     let grey = Color(hex: "D0D0D0") // offline card
     let lightGreen = Color(hex: "F8FDF9") // table row 2 (row 1nya white) - dot yg update itu pake .cyan
-//    let FrameCard = Color(hex: "EFF2F2")
+    let FrameCard = Color(hex: "EFF2F2")
     
     let textPrimary = Color.primary
     let textSecondary = Color.secondary

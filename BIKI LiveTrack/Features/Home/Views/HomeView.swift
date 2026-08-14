@@ -9,21 +9,29 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
-
-    let cardWidth: CGFloat = 340
-
+    
+    // State untuk merekam jejak lebar maksimal dari layar secara dinamis
+    @State private var maxScreenWidth: CGFloat = 0
+    
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 48) {
-
+        GeometryReader { geometry in
+            // Kalkulasi lebar dinamis dengan BATAS MINIMUM (mencegah shrink)
+            // Jika layar menyempit, kolom tidak akan lebih kecil dari 320
+            let dynamicLiveColumnWidth = max(320, (geometry.size.width - 80) / 3)
+            
+            // Kartu history tidak akan lebih kecil dari 360
+            let dynamicHistoryCardWidth = max(360, geometry.size.width * 0.38)
+            
+            VStack(alignment: .leading, spacing: 32) {
+                // ... (Sisa kode HomeView Anda biarkan sama persis)
+                
                 // MARK: - Recently Delivered Section
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
                     Text("Recently Delivered (\(viewModel.deliveredShipments.count))")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(Color.theme.textPrimary)
-                        // Menggunakan 24 untuk menyelaraskan dengan tombol sidebar bawaan iPadOS
                         .padding(.horizontal, 24)
-
+                    
                     if viewModel.isLoading && viewModel.deliveredShipments.isEmpty {
                         ProgressView()
                             .padding(.top, 20)
@@ -33,7 +41,6 @@ struct HomeView: View {
                             .foregroundColor(Color.theme.textSecondary)
                             .padding(.horizontal, 24)
                     } else {
-                        // ScrollView Horizontal untuk Recently Delivered
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
                                 ForEach(viewModel.deliveredShipments) { shipment in
@@ -46,7 +53,8 @@ struct HomeView: View {
                                         driverName: shipment.driver.name,
                                         driverContact: shipment.driver.phoneNumber
                                     )
-                                    .frame(width: cardWidth) // Memaksa ukuran tetap
+                                    // Menggunakan lebar dinamis hasil GeometryReader
+                                    .frame(width: dynamicHistoryCardWidth)
                                 }
                             }
                             .padding(.horizontal, 24)
@@ -54,14 +62,14 @@ struct HomeView: View {
                     }
                 }
                 .padding(.top, 16)
-
+                
                 // MARK: - Currently Live Section
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
                     Text("Currently Live")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(Color.theme.textPrimary)
                         .padding(.horizontal, 24)
-
+                    
                     if viewModel.isLoading && viewModel.activeShipments.isEmpty {
                         ProgressView()
                             .padding(.top, 20)
@@ -71,74 +79,50 @@ struct HomeView: View {
                             .foregroundColor(Color.theme.textSecondary)
                             .padding(.horizontal, 24)
                     } else {
-                        // ScrollView agar kolom Currently Live juga aman jika layarnya sangat sempit
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(alignment: .top, spacing: 16) {
                                 
-                                // Kolom 1: Ideal
-                                VStack(alignment: .leading, spacing: 16) {
-                                    CategoryHeaderView(color: .green, title: "All systems in ideal conditions", count: idealShipments.count)
-                                    ForEach(idealShipments) { shipment in
-                                        ShipmentLiveInfoCardComponent(
-                                            shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
-                                            status: viewModel.shipmentStatuses[shipment.id] ?? .ideal,
-                                            latitude: shipment.endLatitude ?? 0.0,
-                                            longitude: shipment.endLongitude ?? 0.0,
-                                            driverName: shipment.driver.name,
-                                            driverContact: shipment.driver.phoneNumber
-                                        )
-                                        .frame(width: cardWidth)
-                                    }
-                                }
+                                liveColumnView(
+                                    title: "All systems in ideal conditions",
+                                    dotColor: Color.theme.primaryGreen,
+                                    count: idealShipments.count,
+                                    shipments: idealShipments,
+                                    columnWidth: dynamicLiveColumnWidth // Passing calculated width
+                                )
                                 
-                                // Kolom 2: Warning
-                                VStack(alignment: .leading, spacing: 16) {
-                                    CategoryHeaderView(color: .yellow, title: "Need attentions", count: warningShipments.count)
-                                    ForEach(warningShipments) { shipment in
-                                        ShipmentLiveInfoCardComponent(
-                                            shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
-                                            status: viewModel.shipmentStatuses[shipment.id] ?? .ideal,
-                                            latitude: shipment.endLatitude ?? 0.0,
-                                            longitude: shipment.endLongitude ?? 0.0,
-                                            driverName: shipment.driver.name,
-                                            driverContact: shipment.driver.phoneNumber
-                                        )
-                                        .frame(width: cardWidth)
-                                    }
-                                }
+                                liveColumnView(
+                                    title: "Need attentions",
+                                    dotColor: Color.theme.primaryYellow,
+                                    count: warningShipments.count,
+                                    shipments: warningShipments,
+                                    columnWidth: dynamicLiveColumnWidth
+                                )
                                 
-                                // Kolom 3: Offline
-                                VStack(alignment: .leading, spacing: 16) {
-                                    CategoryHeaderView(color: .red, title: "Devices are not connected", count: offlineShipments.count)
-                                    ForEach(offlineShipments) { shipment in
-                                        ShipmentLiveInfoCardComponent(
-                                            shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
-                                            status: viewModel.shipmentStatuses[shipment.id] ?? .ideal,
-                                            latitude: shipment.endLatitude ?? 0.0,
-                                            longitude: shipment.endLongitude ?? 0.0,
-                                            driverName: shipment.driver.name,
-                                            driverContact: shipment.driver.phoneNumber
-                                        )
-                                        .frame(width: cardWidth)
-                                    }
-                                }
+                                liveColumnView(
+                                    title: "Devices are not connected",
+                                    dotColor: Color.theme.primaryRed,
+                                    count: offlineShipments.count,
+                                    shipments: offlineShipments,
+                                    isCountHighlighted: true,
+                                    columnWidth: dynamicLiveColumnWidth
+                                )
                             }
                             .padding(.horizontal, 24)
+                            .frame(maxHeight: .infinity)
                         }
                     }
                 }
+                .frame(maxHeight: .infinity)
             }
-            .padding(.bottom, 40)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 24)
+            .background(Color.clear)
         }
-        .background(Color.clear)
         .refreshable {
             await viewModel.loadHomeData()
         }
         .task {
             await viewModel.loadHomeData()
         }
-        // Memindahkan Tombol Plus agar menempel sejajar di kanan atas (seperti Gambar 2)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
@@ -156,41 +140,74 @@ struct HomeView: View {
         }
     }
     
-    // MARK: - Helper Pengelompokkan (Grouping) Kategori Status
+    // Menambahkan parameter columnWidth agar ukurannya mengikuti GeometryReader
+    @ViewBuilder
+    private func liveColumnView(title: String, dotColor: Color, count: Int, shipments: [Shipment], isCountHighlighted: Bool = false, columnWidth: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(dotColor)
+                    .frame(width: 10, height: 10)
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text("\(count)")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(isCountHighlighted ? dotColor : .secondary)
+            }
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 16) {
+                    ForEach(shipments) { shipment in
+                        ShipmentLiveInfoCardComponent(
+                            shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
+                            status: viewModel.shipmentStatuses[shipment.id] ?? .ideal,
+                            latitude: shipment.endLatitude ?? 0.0,
+                            longitude: shipment.endLongitude ?? 0.0,
+                            driverName: shipment.driver.name,
+                            driverContact: shipment.driver.phoneNumber
+                        )
+                    }
+                }
+                .padding(.bottom, 16)
+            }
+        }
+        .padding(16)
+        .background(Color.theme.FrameCard)
+        .cornerRadius(16)
+        .frame(width: columnWidth) // Menggunakan variabel dinamis dari parameter
+        .frame(maxHeight: .infinity)
+    }
     
     private var idealShipments: [Shipment] {
         viewModel.activeShipments.filter { viewModel.shipmentStatuses[$0.id] == .ideal }
     }
     
     private var warningShipments: [Shipment] {
-        // Catatan: Jika enum Anda memiliki case khusus untuk warning (misal: .warning),
-        // ganti bagian string comparison di bawah ini dengan `== .warning`
         viewModel.activeShipments.filter { String(describing: viewModel.shipmentStatuses[$0.id]).lowercased().contains("warning") }
     }
     
     private var offlineShipments: [Shipment] {
-        // Catatan: Jika enum Anda memiliki case khusus untuk offline (misal: .offline),
-        // ganti bagian string comparison di bawah ini dengan `== .offline`
         viewModel.activeShipments.filter { String(describing: viewModel.shipmentStatuses[$0.id]).lowercased().contains("offline") }
     }
-
+    
     private func formatShipmentDate(_ date: Date?) -> String {
         guard let date else {
             return "—"
         }
-
+        
         let calendar = Calendar.current
-
+        
         if calendar.isDateInToday(date) {
             let time = date.formatted(
                 .dateTime
                     .hour(.twoDigits(amPM: .omitted))
                     .minute(.twoDigits)
             )
-
+            
             return "Today, \(time)"
         }
-
+        
         return date.formatted(
             .dateTime
                 .day(.twoDigits)
@@ -198,29 +215,6 @@ struct HomeView: View {
                 .hour(.twoDigits(amPM: .omitted))
                 .minute(.twoDigits)
         )
-    }
-}
-
-// MARK: - Sub-Komponen Header Kategori (Titik Warna & Judul)
-struct CategoryHeaderView: View {
-    let color: Color
-    let title: String
-    let count: Int
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(color)
-                .frame(width: 10, height: 10)
-            Text(title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.secondary)
-            Spacer()
-            Text("\(count)")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(color == .red ? .red : .secondary)
-        }
-        .padding(.bottom, 8)
     }
 }
 

@@ -50,6 +50,7 @@ struct ContentView: View {
                 .navigationBarTitleDisplayMode(.inline)
             }
         }
+        .navigationSplitViewStyle(.balanced)
     }
 }
 

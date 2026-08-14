@@ -1,28 +1,28 @@
-//
-//  ShipmentSummaryViewModel.swift
-//  BIKI LiveTrack
-//
-//  Created by Joana Mardas on 13/08/26.
-//
-//
-//  ShipmentSummaryViewModel.swift
-//  BIKI LiveTrack
-//
-
 import Foundation
 import Combine
+import CoreLocation
+
+// Pindahkan struct ini dari GraphView ke sini agar bisa diakses ViewModel
+struct HistoricalMetricReading: Identifiable {
+    let id: UUID
+    let timestamp: Date
+    let value: Double
+}
 
 @MainActor
 final class ShipmentSummaryViewModel: ObservableObject {
     @Published private(set) var sensorLogs: [SensorLog] = []
     @Published private(set) var isLoading = false
     @Published var errorMessage: String?
-    @Published var selectedLogDisplay: HistoricalLogDisplay = .graph
-    @Published var exportURL: URL?
-    @Published var isShowingShareSheet = false
-
+    
     let shipment: Shipment
     private let sensorLogRepository: SensorLogRepositoryProtocol
+
+    // MARK: - Konstanta Ideal (Dipindahkan dari GraphView)
+    let temperatureTarget = 8.0
+    let humidityTarget = 87.5
+    let temperatureIdealRange: ClosedRange<Double> = 2...14
+    let humidityIdealRange: ClosedRange<Double> = 85...90
 
     init(
         shipment: Shipment,
@@ -32,8 +32,6 @@ final class ShipmentSummaryViewModel: ObservableObject {
         self.sensorLogRepository = sensorLogRepository
     }
 
-    // The screen calls this once when it appears. Keeping the API call here
-    // means the SwiftUI view only has to worry about displaying data.
     func loadSummaryData() async {
         isLoading = true
         errorMessage = nil
@@ -50,6 +48,7 @@ final class ShipmentSummaryViewModel: ObservableObject {
         isLoading = false
     }
 
+    // MARK: - Computed Properties untuk Logs
     var temperatureLogs: [SensorLog] { sensorLogs.filter { $0.temperature != nil && $0.timestamps != nil } }
     var humidityLogs: [SensorLog] { sensorLogs.filter { $0.humidity != nil && $0.timestamps != nil } }
     var locationLogs: [SensorLog] { sensorLogs.filter { $0.averageLatitude != nil && $0.averageLongitude != nil } }
@@ -62,15 +61,14 @@ final class ShipmentSummaryViewModel: ObservableObject {
     var minimumHumidity: Double? { sensorLogs.compactMap(\.humidity).min() }
     var maximumHumidity: Double? { sensorLogs.compactMap(\.humidity).max() }
 
-    // Mango storage recommendations supplied by the team: 2–14°C and 85–90% humidity.
     var temperatureIsIdeal: Bool {
         guard let value = averageTemperature else { return true }
-        return (2...14).contains(value)
+        return temperatureIdealRange.contains(value)
     }
 
     var humidityIsIdeal: Bool {
         guard let value = averageHumidity else { return true }
-        return (85...90).contains(value)
+        return humidityIdealRange.contains(value)
     }
 
     var tripDuration: String {
@@ -78,27 +76,54 @@ final class ShipmentSummaryViewModel: ObservableObject {
         let seconds = max(0, Int(endDate.timeIntervalSince(shipment.startDate)))
         return String(format: "%02d:%02d:%02d", seconds / 3_600, (seconds % 3_600) / 60, seconds % 60)
     }
-
-    var shipmentIDText: String {
-        "#\(shipment.id.uuidString.prefix(8).uppercased())"
+    
+    // MARK: - Format Data untuk Tabel & Grafik
+    var temperatureReadings: [HistoricalMetricReading] {
+        sensorLogs.compactMap { log in
+            guard let timestamp = log.timestamps, let value = log.temperature else { return nil }
+            return HistoricalMetricReading(id: log.id, timestamp: timestamp, value: value)
+        }
     }
 
-    var deviceIDText: String { shipment.device.name }
-    var plateNumberText: String { shipment.truckPlateNumber }
-    var contactText: String { "\(shipment.driver.name) \(shipment.driver.phoneNumber)" }
-
-    var destinationText: String {
-        guard let latitude = shipment.endLatitude,
-              let longitude = shipment.endLongitude else { return "In progress" }
-        return String(format: "%.4f, %.4f", latitude, longitude)
+    var humidityReadings: [HistoricalMetricReading] {
+        sensorLogs.compactMap { log in
+            guard let timestamp = log.timestamps, let value = log.humidity else { return nil }
+            return HistoricalMetricReading(id: log.id, timestamp: timestamp, value: value)
+        }
     }
-
-    var temperatureStatusText: String { temperatureIsIdeal ? "Ideal" : "Warning" }
-    var humidityStatusText: String { humidityIsIdeal ? "Ideal" : "Warning" }
 
     func temperatureText(_ value: Double?) -> String { formatted(value, suffix: "°C") }
     func humidityText(_ value: Double?) -> String { formatted(value, suffix: "%") }
+    
+    func tableLocationText(for log: SensorLog) -> String {
+        guard let latitude = log.averageLatitude, let longitude = log.averageLongitude else { return "—" }
+        return String(format: "%.4f, %.4f", latitude, longitude)
+    }
+    
+    var destinationCoordinateText: String {
+        guard let latitude = shipment.endLatitude, let longitude = shipment.endLongitude else { return "In progress" }
+        return String(format: "%.4f, %.4f", latitude, longitude)
+    }
 
+    // MARK: - Koordinat Peta (Dipindahkan dari TripDetailsSheet)
+    var startCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: shipment.startLatitude, longitude: shipment.startLongitude)
+    }
+
+    var endCoordinate: CLLocationCoordinate2D? {
+        guard let latitude = shipment.endLatitude, let longitude = shipment.endLongitude else { return nil }
+        return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+
+    var routeCoordinates: [CLLocationCoordinate2D] {
+        let readings = locationLogs.compactMap { log -> CLLocationCoordinate2D? in
+            guard let latitude = log.averageLatitude, let longitude = log.averageLongitude else { return nil }
+            return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        return [startCoordinate] + readings + (endCoordinate.map { [$0] } ?? [])
+    }
+
+    // MARK: - Helper Methods
     func generateCSVURL() throws -> URL {
         var csv = "Timestamp,Temperature (°C),Humidity (%),Latitude,Longitude\n"
 
@@ -121,36 +146,6 @@ final class ShipmentSummaryViewModel: ObservableObject {
         return url
     }
 
-    func prepareCSVExport() {
-        do {
-            exportURL = try generateCSVURL()
-            isShowingShareSheet = true
-        } catch {
-            errorMessage = "Could not create CSV: \(error.localizedDescription)"
-        }
-    }
-
-    func saveGraphPNG(_ pngData: Data) throws -> URL {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("Shipment_\(shipment.id.uuidString.prefix(8).uppercased())_Historical_Graph.png")
-        try pngData.write(to: url, options: .atomic)
-        return url
-    }
-
-    func prepareGraphExport(_ pngData: Data?) {
-        guard let pngData else {
-            errorMessage = "Could not create graph image."
-            return
-        }
-
-        do {
-            exportURL = try saveGraphPNG(pngData)
-            isShowingShareSheet = true
-        } catch {
-            errorMessage = "Could not save graph image: \(error.localizedDescription)"
-        }
-    }
-
     private func average(_ values: [Double]) -> Double? {
         guard !values.isEmpty else { return nil }
         return values.reduce(0, +) / Double(values.count)
@@ -158,9 +153,7 @@ final class ShipmentSummaryViewModel: ObservableObject {
 
     private func formatted(_ value: Double?, suffix: String) -> String {
         guard let value else { return "—" }
-        let number = value.rounded() == value
-            ? String(Int(value))
-            : String(format: "%.1f", value)
+        let number = value.rounded() == value ? String(Int(value)) : String(format: "%.1f", value)
         return number + suffix
     }
 

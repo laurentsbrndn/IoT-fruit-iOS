@@ -12,31 +12,7 @@ struct SensorCardShipmentHistoryComponent: View {
     var averageValue: String
     var minValue: String
     var maxValue: String
-    var statusIcon: String
-    var statusText: String
-    var statusColor: Color
-
-    var statusBackgroundColor: Color {
-        switch statusText.lowercased() {
-        case "warning":
-            return Color.theme.secondaryYellow
-        case "offline":
-            return Color.theme.secondaryRed
-        default:
-            return Color.theme.secondaryGreen
-        }
-    }
-
-    var statusForegroundColor: Color {
-        switch statusText.lowercased() {
-        case "warning":
-            return Color.theme.primaryYellow
-        case "offline":
-            return Color.theme.primaryRed
-        default:
-            return Color.theme.primaryGreen
-        }
-    }
+    var status: DeviceStatus
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -60,14 +36,7 @@ struct SensorCardShipmentHistoryComponent: View {
                             .minimumScaleFactor(0.75)
                             .foregroundColor(Color.theme.textPrimary)
 
-                        Text(statusText)
-                            .font(.system(size: 16, weight: .semibold))
-                            .tracking(-0.31)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 2)
-                            .foregroundColor(statusForegroundColor)
-                            .background(statusBackgroundColor)
-                            .clipShape(Capsule())
+                        StatusBadgeComponent(status: status)
                     }
                 }
                 .frame(width: 155, alignment: .leading)
@@ -105,7 +74,7 @@ struct SensorCardShipmentHistoryComponent: View {
         .padding(24)
         .frame(width: 300, height: 209)
         .background(Color.white)
-        .cornerRadius(15)
+        .cornerRadius(16)
         .shadow(color: .black.opacity(0.1), radius: 4, y: 4)
     }
 }
@@ -120,9 +89,7 @@ struct SensorCardShipmentHistoryComponent: View {
                 averageValue: "10°C",
                 minValue: "8°C",
                 maxValue: "14°C",
-                statusIcon: "checkmark.circle.fill",
-                statusText: "Ideal",
-                statusColor: Color.theme.primaryGreen
+                status: .ideal
             )
             
             SensorCardShipmentHistoryComponent(
@@ -130,9 +97,7 @@ struct SensorCardShipmentHistoryComponent: View {
                 averageValue: "80%",
                 minValue: "75%",
                 maxValue: "85%",
-                statusIcon: "checkmark.circle.fill",
-                statusText: "Warning",
-                statusColor: Color.theme.primaryYellow
+                status: .warning
             )
         }
         .padding()

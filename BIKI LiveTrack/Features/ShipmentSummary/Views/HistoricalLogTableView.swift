@@ -12,13 +12,13 @@
 import SwiftUI
 
 struct HistoricalLogTableView: View {
-    let sensorLogs: [SensorLog]
+    @ObservedObject var viewModel: ShipmentSummaryViewModel
 
     var body: some View {
         VStack(spacing: 0) {
             tableHeader
 
-        ForEach(Array(sensorLogs.enumerated()), id: \.element.id) { index, log in
+            ForEach(Array(viewModel.sensorLogs.enumerated()), id: \.element.id) { index, log in
                 tableRow(log, background: index.isMultiple(of: 2) ? Color.white : Color.theme.lightGreen)
             }
         }
@@ -42,9 +42,9 @@ struct HistoricalLogTableView: View {
     private func tableRow(_ log: SensorLog, background: Color) -> some View {
         HStack(spacing: 16) {
             tableCell(log.timestamps?.toReadableString() ?? "—", alignment: .leading)
-            tableCell(formatted(log.temperature, suffix: "°C"), alignment: .leading)
-            tableCell(formatted(log.humidity, suffix: "%"), alignment: .leading)
-            tableCell(locationText(for: log), alignment: .leading)
+            tableCell(viewModel.temperatureText(log.temperature), alignment: .leading)
+            tableCell(viewModel.humidityText(log.humidity), alignment: .leading)
+            tableCell(viewModel.tableLocationText(for: log), alignment: .leading)
         }
         .font(.app.body)
         .foregroundColor(Color.theme.textPrimary)
@@ -61,21 +61,4 @@ struct HistoricalLogTableView: View {
             .frame(maxWidth: .infinity, alignment: alignment)
             .lineLimit(2)
     }
-
-    private func formatted(_ value: Double?, suffix: String) -> String {
-        guard let value else { return "—" }
-        return value.rounded() == value ? "\(Int(value))\(suffix)" : String(format: "%.1f%@", value, suffix)
-    }
-
-    private func locationText(for log: SensorLog) -> String {
-        guard let latitude = log.averageLatitude, let longitude = log.averageLongitude else { return "—" }
-        return String(format: "%.4f, %.4f", latitude, longitude)
-    }
-}
-
-#Preview("Historical Log Table", traits: .landscapeLeft) {
-    HistoricalLogTableView(sensorLogs: ShipmentSummaryPreviewData.sensorLogs)
-        .padding()
-        .background(Color.theme.tertiaryGreen)
-        .frame(width: 1_100, height: 460)
 }

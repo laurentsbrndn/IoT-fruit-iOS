@@ -9,8 +9,8 @@ import SwiftUI
 
 struct TripDurationCardComponent: View {
     var duration: String
-    var origin: String
-    var destination: String
+    var origin: AnyView
+    var destination: AnyView
     
     var body: some View {
         VStack(spacing: 16) {
@@ -34,7 +34,8 @@ struct TripDurationCardComponent: View {
                 .padding(.vertical, 4)
             
             HStack {
-                Text(origin)
+                // Langsung memanggil origin sebagai View
+                origin
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(Color.theme.textSecondary)
                 
@@ -46,7 +47,8 @@ struct TripDurationCardComponent: View {
                 
                 Spacer()
                 
-                Text(destination)
+                // Langsung memanggil destination sebagai View
+                destination
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(Color.theme.textSecondary)
             }
@@ -63,8 +65,9 @@ struct TripDurationCardComponent: View {
         
         TripDurationCardComponent(
             duration: "10:45:09",
-            origin: "BIKI point SMG",
-            destination: "Ranch Market BSD"
+            // Preview disesuaikan agar mengirimkan AnyView
+            origin: AnyView(Text("BIKI point SMG")),
+            destination: AnyView(Text("Ranch Market BSD"))
         )
         .padding()
     }
