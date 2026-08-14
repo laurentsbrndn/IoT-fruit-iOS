@@ -37,8 +37,8 @@ struct ShipmentSummaryView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 22) {
-            VStack(alignment: .leading, spacing: 28) {
+            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 20) {
                 shipmentHeader
 
                 Text("Shipment Overview")
