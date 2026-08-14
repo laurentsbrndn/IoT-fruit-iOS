@@ -51,9 +51,7 @@ struct ShipmentSummaryView: View {
                             averageValue: viewModel.temperatureText(viewModel.averageTemperature),
                             minValue: viewModel.temperatureText(viewModel.minimumTemperature),
                             maxValue: viewModel.temperatureText(viewModel.maximumTemperature),
-                            statusIcon: "checkmark.circle.fill",
-                            statusText: viewModel.temperatureIsIdeal ? "Ideal" : "Warning",
-                            statusColor: viewModel.temperatureIsIdeal ? Color.theme.primaryGreen : Color.theme.primaryYellow
+                            status: viewModel.temperatureIsIdeal ? .ideal : .warning
                         )
                         
                         SensorCardShipmentHistoryComponent(
@@ -61,9 +59,7 @@ struct ShipmentSummaryView: View {
                             averageValue: viewModel.humidityText(viewModel.averageHumidity),
                             minValue: viewModel.humidityText(viewModel.minimumHumidity),
                             maxValue: viewModel.humidityText(viewModel.maximumHumidity),
-                            statusIcon: "exclamationmark.triangle.fill",
-                            statusText: viewModel.humidityIsIdeal ? "Ideal" : "Warning",
-                            statusColor: viewModel.humidityIsIdeal ? Color.theme.primaryGreen : Color.theme.primaryYellow
+                            status: viewModel.humidityIsIdeal ? .ideal : .warning
                         )
                         
                         Button {
