@@ -85,7 +85,7 @@ struct ShipmentHistoryInfoCardComponent: View {
             }
         }
         .padding(.horizontal, 24)
-        .padding(.vertical, 18)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(uiColor: .systemBackground))
         .clipShape(.rect(cornerRadius: 20))

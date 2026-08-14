@@ -51,9 +51,7 @@ struct ShipmentSummaryView: View {
                         averageValue: viewModel.temperatureText(viewModel.averageTemperature),
                         minValue: viewModel.temperatureText(viewModel.minimumTemperature),
                         maxValue: viewModel.temperatureText(viewModel.maximumTemperature),
-                        statusIcon: "checkmark.circle.fill",
-                        statusText: viewModel.temperatureStatusText,
-                        statusColor: viewModel.temperatureIsIdeal ? Color.theme.primaryGreen : Color.theme.primaryYellow
+                        status: viewModel.temperatureIsIdeal ? .ideal : .warning
                     )
 
                     SensorCardShipmentHistoryComponent(
@@ -61,9 +59,7 @@ struct ShipmentSummaryView: View {
                         averageValue: viewModel.humidityText(viewModel.averageHumidity),
                         minValue: viewModel.humidityText(viewModel.minimumHumidity),
                         maxValue: viewModel.humidityText(viewModel.maximumHumidity),
-                        statusIcon: "exclamationmark.triangle.fill",
-                        statusText: viewModel.humidityStatusText,
-                        statusColor: viewModel.humidityIsIdeal ? Color.theme.primaryGreen : Color.theme.primaryYellow
+                        status: viewModel.humidityIsIdeal ? .ideal : .warning
                     )
 
                     Button {
@@ -129,7 +125,7 @@ struct ShipmentSummaryView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top) {
                 Text(viewModel.shipmentIDText)
-                    .font(.system(size: 46, weight: .bold))
+                    .font(.system(size: 42, weight: .bold))
                     .foregroundColor(Color.theme.textPrimary)
 
                 Spacer()
@@ -145,7 +141,6 @@ struct ShipmentSummaryView: View {
             }
         }
     }
-
     private var exportMenu: some View {
         Menu {
             Button {
@@ -287,3 +282,4 @@ private final class ShipmentSummaryPreviewSensorLogRepository: SensorLogReposito
         sensorLogRepository: ShipmentSummaryPreviewSensorLogRepository()
     )
 }
+
