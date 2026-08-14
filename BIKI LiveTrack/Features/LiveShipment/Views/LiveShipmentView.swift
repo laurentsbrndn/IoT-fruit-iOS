@@ -72,8 +72,8 @@ struct LiveShipmentView: View {
                     
                     TripDurationCardComponent(
                         duration: viewModel.tripDuration,
-                        origin: viewModel.originText,
-                        destination: viewModel.destinationText
+                        origin: AnyView(Text(viewModel.originText)),
+                        destination: AnyView(Text(viewModel.destinationText))
                     )
                 }
                 .padding(.horizontal, 24)
@@ -162,12 +162,12 @@ private enum LiveShipmentPreviewData {
     static let sensorLogs: [SensorLog] = [
         SensorLog(
             id: UUID(),
-            shipmentID: shipment.id,
             temperature: 10.0,
             humidity: 88.0,
             latitude: [-6.3005],
             longitude: [106.6527],
-            timestamps: Date()
+            timestamps: Date(),
+            shipment: SensorLog.ShipmentReference(id: shipment.id)
         )
     ]
 }
