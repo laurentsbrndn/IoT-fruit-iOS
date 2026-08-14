@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AD71CCEB302DD08B00947264 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = AD71CCEA302DD08400947264 /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		A7B4A37030245B0D00B08C8B /* BIKI LiveTrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BIKI LiveTrack.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD71CCEA302DD08400947264 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +37,7 @@
 		A7B4A36730245B0D00B08C8B = {
 			isa = PBXGroup;
 			children = (
+				AD71CCEA302DD08400947264 /* .gitignore */,
 				A7B4A37230245B0D00B08C8B /* BIKI LiveTrack */,
 				A7B4A37130245B0D00B08C8B /* Products */,
 			);
@@ -110,6 +116,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AD71CCEB302DD08B00947264 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

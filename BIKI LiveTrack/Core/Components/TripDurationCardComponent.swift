@@ -16,7 +16,7 @@ struct TripDurationCardComponent: View {
         VStack(spacing: 16) {
             ZStack {
                 Text("Trip Duration")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(Color.theme.textSecondary)
                 
                 HStack {
@@ -28,11 +28,10 @@ struct TripDurationCardComponent: View {
             }
             
             Text(duration)
-                .font(.system(size: 64, weight: .regular))
+                .font(.system(size: 60, weight: .regular))
                 .monospacedDigit()
                 .foregroundColor(Color.theme.textPrimary)
-                .padding(.vertical, 4)
-            
+
             HStack {
                 // Langsung memanggil origin sebagai View
                 origin
@@ -54,8 +53,10 @@ struct TripDurationCardComponent: View {
             }
         }
         .padding(24)
+        .frame(width: 469, height: 189)
         .background(Color.white)
         .cornerRadius(15)
+        .shadow(color: .black.opacity(0.1), radius: 4, y: 4)
     }
 }
 

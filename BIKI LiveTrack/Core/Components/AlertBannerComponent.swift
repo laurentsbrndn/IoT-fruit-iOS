@@ -60,7 +60,7 @@ extension AlertBannerComponent {
     }
 }
 
-#Preview {
+#Preview (traits: .landscapeRight){
     ZStack {
         Color.theme.tertiaryGreen.ignoresSafeArea()
 

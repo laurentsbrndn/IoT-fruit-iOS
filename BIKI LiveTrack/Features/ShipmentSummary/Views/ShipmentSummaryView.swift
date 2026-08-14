@@ -115,6 +115,68 @@ struct ShipmentSummaryView: View {
                         .padding(.horizontal, 32)
                         .padding(.bottom, 32)
                 }
+            VStack(alignment: .leading, spacing: 28) {
+                shipmentHeader
+
+                Text("Shipment Overview")
+                    .font(.app.heading1)
+                    .foregroundColor(Color.theme.textPrimary)
+
+                HStack(alignment: .top, spacing: 18) {
+                    SensorCardShipmentHistoryComponent(
+                        title: "Temperature",
+                        averageValue: viewModel.temperatureText(viewModel.averageTemperature),
+                        minValue: viewModel.temperatureText(viewModel.minimumTemperature),
+                        maxValue: viewModel.temperatureText(viewModel.maximumTemperature),
+                        status: viewModel.temperatureIsIdeal ? .ideal : .warning
+                    )
+
+                    SensorCardShipmentHistoryComponent(
+                        title: "Humidity",
+                        averageValue: viewModel.humidityText(viewModel.averageHumidity),
+                        minValue: viewModel.humidityText(viewModel.minimumHumidity),
+                        maxValue: viewModel.humidityText(viewModel.maximumHumidity),
+                        status: viewModel.humidityIsIdeal ? .ideal : .warning
+                    )
+
+                    Button {
+                        isShowingTripDetails = true
+                    } label: {
+                        TripDurationCardComponent(
+                            duration: viewModel.tripDuration,
+                            origin: "Start location",
+                            destination: "Destination"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
+                }
+
+                HStack {
+                    Text("Historical Log")
+                        .font(.app.heading1)
+                        .foregroundColor(Color.theme.textPrimary)
+
+                    Spacer()
+
+                    Picker("Historical log display", selection: $viewModel.selectedLogDisplay) {
+                        ForEach(HistoricalLogDisplay.allCases) { display in
+                            Text(display.rawValue).tag(display)
+                        } //test
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 280)
+                }
+
+            }
+            .padding(.horizontal, 32)
+            .padding(.top, 26)
+
+            ScrollView(showsIndicators: true) {
+                logContent
+                    .padding(.horizontal, 32)
+                    .padding(.bottom, 32)
+            }
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
             .background(Color.theme.tertiaryGreen)
@@ -137,6 +199,8 @@ struct ShipmentSummaryView: View {
             HStack(alignment: .top) {
                 Text("#\(viewModel.shipment.id.uuidString.prefix(8).uppercased())")
                     .font(.system(size: 46, weight: .bold))
+                Text(viewModel.shipmentIDText)
+                    .font(.system(size: 42, weight: .bold))
                     .foregroundColor(Color.theme.textPrimary)
                 
                 Spacer()
@@ -292,3 +356,64 @@ private struct ActivitySheet: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+
+// Sample data used only by Xcode previews in this feature.
+enum ShipmentSummaryPreviewData {
+    static let startDate = Date(timeIntervalSince1970: 1_785_993_600)
+    static let endDate = Date(timeIntervalSince1970: 1_786_050_900)
+
+    static let shipment = Shipment(
+        id: UUID(uuidString: "B1175000-0000-0000-0000-000000000000")!,
+        device: Device(id: UUID(uuidString: "D1175000-0000-0000-0000-000000000000")!, name: "IoT_Testing01"),
+        driver: Driver(id: UUID(uuidString: "A1175000-0000-0000-0000-000000000000")!, name: "Septa Bayu", phoneNumber: "0878 xxx xxx"),
+        truckPlateNumber: "DK 8959 JKY",
+        startDate: startDate,
+        endDate: endDate,
+        startLatitude: -6.3005,
+        startLongitude: 106.6527,
+        endLatitude: -7.0051,
+        endLongitude: 110.4381
+    )
+
+    // Preview-only readings, sampled every 10 minutes to make the Swift Charts
+    // line visible in Xcode Canvas. Production uses the real API sensor logs.
+    static let sensorLogs: [SensorLog] = (0..<37).map { index in
+        let minutes = Double(index * 10)
+        let temperature = 9.5 + sin(Double(index) * 0.42) * 1.4
+        let humidity = 86.5 + cos(Double(index) * 0.35) * 3.8
+        let progress = Double(index) / 36
+        let latitude = -6.3005 + ((-7.0051) - (-6.3005)) * progress
+        let longitude = 106.6527 + (110.4381 - 106.6527) * progress
+        return log(minutes: minutes, temperature: temperature, humidity: humidity, latitude: latitude, longitude: longitude)
+    }
+
+    private static func log(minutes: Double, temperature: Double, humidity: Double, latitude: Double, longitude: Double) -> SensorLog {
+        SensorLog(
+            id: UUID(),
+            shipmentID: shipment.id,
+            temperature: temperature,
+            humidity: humidity,
+            latitude: [latitude],
+            longitude: [longitude],
+            timestamps: startDate.addingTimeInterval(minutes * 60)
+        )
+    }
+}
+
+private final class ShipmentSummaryPreviewSensorLogRepository: SensorLogRepositoryProtocol {
+    func fetchAllSensors() async throws -> [SensorLog] {
+        ShipmentSummaryPreviewData.sensorLogs
+    }
+
+    func fetchSensors(byShipmentID shipmentID: String) async throws -> [SensorLog] {
+        ShipmentSummaryPreviewData.sensorLogs
+    }
+}
+
+#Preview("Shipment Summary — Landscape", traits: .landscapeLeft) {
+    ShipmentSummaryView(
+        shipment: ShipmentSummaryPreviewData.shipment,
+        sensorLogRepository: ShipmentSummaryPreviewSensorLogRepository()
+    )
+}
+
