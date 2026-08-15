@@ -40,8 +40,7 @@ struct AlertBannerComponent: View {
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(textColor)
                 Spacer()
-                }
-          
+            }
         }
         .padding(16)
         .background(backgroundColor)
@@ -51,71 +50,43 @@ struct AlertBannerComponent: View {
 
 extension AlertBannerComponent {
     init(alertType: AlertType, timeString: String) {
+        
+        let computedIcon: String
+        switch alertType.title {
+        case "High Humidity": computedIcon = "humidity.fill"
+        case "Low Humidity": computedIcon = "humidity"
+        case "Humidity Normalized": computedIcon = "drop.fill"
+        case "Lost Connection": computedIcon = "wifi.slash"
+        case "Connection Back": computedIcon = "wifi"
+        case "High Temperature": computedIcon = "thermometer.sun"
+        case "Low Temperature": computedIcon = "thermometer.snowflake"
+        case "Temperature Normalized": computedIcon = "thermometer.variable"
+        default: computedIcon = "bell.fill"
+        }
+        
+        let bg: Color
+        let fg: Color
+        
+        switch alertType.severity.lowercased() {
+        case "warning":
+            bg = Color.theme.primaryYellow.opacity(0.1)
+            fg = Color.theme.primaryYellow
+        case "critical":
+            bg = Color.theme.primaryRed.opacity(0.1)
+            fg = Color.theme.primaryRed
+        default: // "info" atau normal
+            bg = Color.theme.primaryGreen.opacity(0.1)
+            fg = Color.theme.primaryGreen
+        }
+        
         self.init(
             title: alertType.title,
             message: alertType.description ?? "",
             timeString: timeString,
-            iconName: alertType.iconName
+            iconName: computedIcon,
+            backgroundColor: bg,
+            iconColor: fg,
+            textColor: fg
         )
-    }
-}
-
-#Preview (traits: .landscapeRight){
-    ZStack {
-        Color.theme.tertiaryGreen.ignoresSafeArea()
-
-        ScrollView {
-            VStack(spacing: 12) {
-                AlertBannerComponent(
-                    title: "High Humidity",
-                    message: "Humidity is above the ideal range",
-                    timeString: "10 minutes ago",
-                    iconName: "humidity.fill"
-                )
-                AlertBannerComponent(
-                    title: "Low Humidity",
-                    message: "Humidity has dropped below the ideal range",
-                    timeString: "10 minutes ago",
-                    iconName: "humidity"
-                )
-                AlertBannerComponent(
-                    title: "Humidity Normalized",
-                    message: "Humidity is back within the ideal range",
-                    timeString: "10 minutes ago",
-                    iconName: "drop.fill"
-                )
-                AlertBannerComponent(
-                    title: "Lost Connection",
-                    message: "Sensor stopped sending data",
-                    timeString: "1 hour ago",
-                    iconName: "wifi.slash"
-                )
-                AlertBannerComponent(
-                    title: "Connection Back",
-                    message: "Sensor is back online and reporting normally",
-                    timeString: "1 hour ago",
-                    iconName: "wifi"
-                )
-                AlertBannerComponent(
-                    title: "High Temperature",
-                    message: "Temperature is above the ideal range",
-                    timeString: "5 hour ago",
-                    iconName: "thermometer.sun"
-                )
-                AlertBannerComponent(
-                    title: "Low Temperature",
-                    message: "Temperature has dropped below the ideal range",
-                    timeString: "4 hour ago",
-                    iconName: "thermometer.snowflake"
-                )
-                AlertBannerComponent(
-                    title: "Temperature Normalized",
-                    message: "Temperature is back within the ideal range",
-                    timeString: "4 hour ago",
-                    iconName: "thermometer.variable"
-                )
-            }
-            .padding()
-        }
     }
 }
