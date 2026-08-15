@@ -12,10 +12,9 @@ final class WebSocketManager: ObservableObject {
     static let shared = WebSocketManager()
     
     @Published var isConnected: Bool = false
-    @Published var liveTelemetryString: String = ""
+    @Published var latestTelemetry: WSTelemetryDTO? = nil
     
     private var webSocketTask: URLSessionWebSocketTask?
-    
     private let wsURL = URL(string: "wss://fruit-shipment.onrender.com/api/live-telemetry")!
     
     private init() {}
@@ -51,11 +50,11 @@ final class WebSocketManager: ObservableObject {
             case .success(let message):
                 switch message {
                 case .string(let text):
-                    DispatchQueue.main.async {
-                        self.liveTelemetryString = text
+                    if let data = text.data(using: .utf8) {
+                        self.decodeAndPublish(data)
                     }
                 case .data(let data):
-                    print("Received binary data: \(data.count) bytes")
+                    self.decodeAndPublish(data)
                 @unknown default:
                     break
                 }
@@ -68,6 +67,18 @@ final class WebSocketManager: ObservableObject {
                 print("WebSocket Connection Error: \(error.localizedDescription)")
                 self.disconnect()
             }
+        }
+    }
+    
+    private func decodeAndPublish(_ data: Data) {
+        do {
+            let decoder = JSONDecoder()
+            let telemetry = try decoder.decode(WSTelemetryDTO.self, from: data)
+            DispatchQueue.main.async {
+                self.latestTelemetry = telemetry
+            }
+        } catch {
+            print("WebSocket Decode Error: \(error.localizedDescription)")
         }
     }
     

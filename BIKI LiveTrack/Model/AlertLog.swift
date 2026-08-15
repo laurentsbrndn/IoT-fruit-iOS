@@ -1,42 +1,32 @@
-////
-////  AlertLog.swift
-////  BIKI LiveTrack
-////
-////  Created by Laurentius Brandon Vikario on 06/08/26.
-////
 //
-//import Foundation
+//  AlertLog.swift
+//  BIKI LiveTrack
 //
-//struct AlertLog: Identifiable, Codable {
-//    let id: UUID
-//    let alertType: AlertType
-//    let shipmentID: UUID
-//    let sensorLogID: UUID
-//    let timestamps: Date
-//    
-//    enum CodingKeys: String, CodingKey {
-//        case id = "alert_log_id"
-//        case alertType = "alert_type"
-//        case shipmentID = "shipment_id"
-//        case sensorLogID = "sensor_log_id"
-//        case timestamps = "timestamps"
-//    }
-//}
+//  Created by Laurentius Brandon Vikario on 06/08/26.
+//
 
 import Foundation
 
 struct AlertLog: Identifiable, Codable {
     let id: UUID
     let alertType: AlertType
-    let shipmentID: UUID
-    let sensorLogID: UUID
     let timestamps: Date
     
+    private let shipment: ParentRef
+    private let sensorLog: ParentRef
+    
+    var shipmentID: UUID { shipment.id }
+    var sensorLogID: UUID { sensorLog.id }
+    
     enum CodingKeys: String, CodingKey {
-        case id = "alert_log_id"
-        case alertType = "alert_type"
-        case shipmentID = "shipment_id"
-        case sensorLogID = "sensor_log_id"
+        case id = "id"
+        case alertType = "alertType"
+        case shipment = "shipment"
+        case sensorLog = "sensorLog"
         case timestamps = "timestamps"
+    }
+    
+    struct ParentRef: Codable {
+        let id: UUID
     }
 }
