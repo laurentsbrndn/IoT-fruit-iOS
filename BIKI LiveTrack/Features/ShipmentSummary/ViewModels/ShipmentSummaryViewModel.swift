@@ -31,6 +31,58 @@ final class ShipmentSummaryViewModel: ObservableObject {
         self.shipment = shipment
         self.sensorLogRepository = sensorLogRepository
     }
+    
+    // MARK: - Shipment Header Presentation
+
+    var shipmentIDText: String {
+        "#\(shipment.id.uuidString.prefix(8).uppercased())"
+    }
+
+    var deviceNameText: String {
+        shipment.device.name
+    }
+
+    var plateNumberText: String {
+        shipment.truckPlateNumber
+    }
+
+    var contactText: String {
+        "\(shipment.driver.name) \(shipment.driver.phoneNumber)"
+    }
+
+    // MARK: - Sensor Card Presentation
+
+    var temperatureAverageText: String {
+        temperatureText(averageTemperature)
+    }
+
+    var temperatureMinimumText: String {
+        temperatureText(minimumTemperature)
+    }
+
+    var temperatureMaximumText: String {
+        temperatureText(maximumTemperature)
+    }
+
+    var temperatureStatus: DeviceStatus {
+        temperatureIsIdeal ? .ideal : .warning
+    }
+
+    var humidityAverageText: String {
+        humidityText(averageHumidity)
+    }
+
+    var humidityMinimumText: String {
+        humidityText(minimumHumidity)
+    }
+
+    var humidityMaximumText: String {
+        humidityText(maximumHumidity)
+    }
+
+    var humidityStatus: DeviceStatus {
+        humidityIsIdeal ? .ideal : .warning
+    }
 
     func loadSummaryData() async {
         isLoading = true
@@ -124,25 +176,106 @@ final class ShipmentSummaryViewModel: ObservableObject {
     }
 
     // MARK: - Helper Methods
-    func generateCSVURL() throws -> URL {
-        var csv = "Timestamp,Temperature (°C),Humidity (%),Latitude,Longitude\n"
+    // MARK: - Export
+    func prepareCSVExport() -> URL? {
+        do {
+            return try makeCSVURL()
+        } catch {
+            errorMessage =
+                "Could not create CSV: \(error.localizedDescription)"
+            return nil
+        }
+    }
 
-        for log in sensorLogs {
-            let timestamp = log.timestamps?.toReadableString() ?? ""
-            let temperature = log.temperature.map { String(format: "%.1f", $0) } ?? ""
-            let humidity = log.humidity.map { String(format: "%.1f", $0) } ?? ""
-            let latitude = log.averageLatitude.map { String(format: "%.6f", $0) } ?? ""
-            let longitude = log.averageLongitude.map { String(format: "%.6f", $0) } ?? ""
-
-            csv += [timestamp, temperature, humidity, latitude, longitude]
-                .map(csvValue)
-                .joined(separator: ",") + "\n"
+    func prepareGraphPNGExport(
+        from pngData: Data?
+    ) -> URL? {
+        guard let pngData else {
+            errorMessage = "Could not create graph image."
+            return nil
         }
 
-        let shipmentID = shipment.id.uuidString.prefix(8).uppercased()
+        let fileName =
+            "Shipment_\(shipmentIDForFile)_Historical_Graph.png"
+
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("Shipment_\(shipmentID)_Historical_Log.csv")
-        try csv.write(to: url, atomically: true, encoding: .utf8)
+            .appendingPathComponent(fileName)
+
+        do {
+            try pngData.write(
+                to: url,
+                options: [.atomic]
+            )
+
+            return url
+        } catch {
+            errorMessage =
+                "Could not save graph image: \(error.localizedDescription)"
+            return nil
+        }
+    }
+
+    private var shipmentIDForFile: String {
+        String(
+            shipment.id.uuidString
+                .prefix(8)
+                .uppercased()
+        )
+    }
+
+    private func makeCSVURL() throws -> URL {
+        var csv =
+            "Timestamp,Temperature (°C),Humidity (%),Latitude,Longitude\n"
+
+        for log in sensorLogs {
+            let timestamp =
+                log.timestamps?.toReadableString() ?? ""
+
+            let temperature =
+                log.temperature.map {
+                    String(format: "%.1f", $0)
+                } ?? ""
+
+            let humidity =
+                log.humidity.map {
+                    String(format: "%.1f", $0)
+                } ?? ""
+
+            let latitude =
+                log.averageLatitude.map {
+                    String(format: "%.6f", $0)
+                } ?? ""
+
+            let longitude =
+                log.averageLongitude.map {
+                    String(format: "%.6f", $0)
+                } ?? ""
+
+            csv += [
+                timestamp,
+                temperature,
+                humidity,
+                latitude,
+                longitude
+            ]
+            .map(csvValue)
+            .joined(separator: ",")
+
+            csv += "\n"
+        }
+
+        let fileName =
+            "Shipment_\(shipmentIDForFile)_Historical_Log.csv"
+
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(fileName)
+
+        try csv.write(
+            to: url,
+            atomically: true,
+            encoding: .utf8
+        )
+
         return url
     }
 
