@@ -1,142 +1,262 @@
-//
-//  HistoricalLogGraphView.swift
-//  BIKI LiveTrack
-//
-
 import SwiftUI
 import Charts
 
 struct HistoricalLogGraphView: View {
     @ObservedObject var viewModel: ShipmentSummaryViewModel
 
+    private var graphViewModel: HistoricalLogGraphViewModel {
+        HistoricalLogGraphViewModel(
+            summaryViewModel: viewModel
+        )
+    }
+
     var body: some View {
         VStack(spacing: 20) {
-            HealthStyleBarChart(
-                title: "Temperature over time",
-                unit: "°C",
-                targetValue: viewModel.temperatureTarget,
-                idealRange: viewModel.temperatureIdealRange,
-                readings: viewModel.temperatureReadings,
+            HistoricalMetricChart(
+                viewModel: graphViewModel.temperature,
                 tint: Color.theme.primaryGreen
             )
 
-            HealthStyleBarChart(
-                title: "Humidity over time",
-                unit: "%",
-                targetValue: viewModel.humidityTarget,
-                idealRange: viewModel.humidityIdealRange,
-                readings: viewModel.humidityReadings,
+            HistoricalMetricChart(
+                viewModel: graphViewModel.humidity,
                 tint: Color.theme.primaryGreen
             )
         }
     }
 }
 
-private struct HealthStyleBarChart: View {
-    let title: String
-    let unit: String
-    let targetValue: Double
-    let idealRange: ClosedRange<Double>
-    let readings: [HistoricalMetricReading]
+// MARK: - Chart UI
+
+private struct HistoricalMetricChart: View {
+    let viewModel: HistoricalLogGraphViewModel.Metric
     let tint: Color
 
+    @State private var selectedTimestamp: Date?
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.app.title1)
-                .foregroundColor(Color.theme.textPrimary)
-
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(formattedAverage)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundColor(tint)
-                Text(unit)
-                    .font(.app.bodyBold)
-                    .foregroundColor(tint)
-            }
-
-            Chart {
-                RectangleMark(
-                    yStart: .value("Ideal minimum", idealRange.lowerBound),
-                    yEnd: .value("Ideal maximum", idealRange.upperBound)
-                )
-                .foregroundStyle(tint.opacity(0.10))
-
-                RuleMark(y: .value("Ideal minimum", idealRange.lowerBound))
-                    .foregroundStyle(tint.opacity(0.45))
-                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
-
-                RuleMark(y: .value("Ideal maximum", idealRange.upperBound))
-                    .foregroundStyle(tint.opacity(0.45))
-                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
-
-                ForEach(readings) { reading in
-                    if idealRange.contains(reading.value) {
-                        BarMark(
-                            x: .value("Time", reading.timestamp),
-                            yStart: .value("Target", targetValue),
-                            yEnd: .value("Reading", reading.value),
-                            width: .fixed(9)
-                        )
-                        .foregroundStyle(tint)
-                        .cornerRadius(5)
-                    } else {
-                        BarMark(
-                            x: .value("Time", reading.timestamp),
-                            yStart: .value("Target", targetValue),
-                            yEnd: .value("Reading", reading.value),
-                            width: .fixed(9)
-                        )
-                        .foregroundStyle(Color.theme.primaryYellow)
-                        .cornerRadius(5)
-                    }
-                }
-            }
-            .chartYScale(domain: yDomain)
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 3)) { _ in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0))
-                    AxisTick(stroke: StrokeStyle(lineWidth: 0))
-                    AxisValueLabel(format: .dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
-                        .font(.caption)
-                        .foregroundStyle(Color.theme.textSecondary)
-                }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [3, 4]))
-                        .foregroundStyle(Color.gray.opacity(0.25))
-                    AxisValueLabel {
-                        if let number = value.as(Double.self) {
-                            Text(formatted(number))
-                                .font(.caption)
-                                .foregroundStyle(Color.theme.textSecondary)
-                        }
-                    }
-                }
-            }
-            .frame(height: 210)
+        VStack(alignment: .leading, spacing: 16) {
+            chartHeader
+            chart
         }
-        .padding(24)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .accessibilityLabel("\(title). Shaded area is the ideal range from \(formatted(idealRange.lowerBound)) to \(formatted(idealRange.upperBound))\(unit).")
+        .padding(20)
+        .background(
+            .white,
+            in: RoundedRectangle(cornerRadius: 18)
+        )
     }
 
-    private var formattedAverage: String {
-        guard !readings.isEmpty else { return "—" }
-        return formatted(readings.map(\.value).reduce(0, +) / Double(readings.count))
+    private var chartHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(viewModel.title)
+                .font(.app.bodyBold)
+
+            Text(viewModel.averageText)
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(.primary)
+        }
     }
 
-    private var yDomain: ClosedRange<Double> {
-        let values = readings.map(\.value) + [idealRange.lowerBound, idealRange.upperBound, targetValue]
-        let minimum = values.min() ?? targetValue
-        let maximum = values.max() ?? targetValue
-        let padding = max((maximum - minimum) * 0.35, unit == "%" ? 5 : 2)
-        return (minimum - padding)...(maximum + padding)
+    private var chart: some View {
+        Chart {
+            idealRangeMark
+            readingMarks
+            selectedReadingMark
+        }
+        .chartYScale(domain: viewModel.yDomain)
+        .chartXScale(
+            domain: viewModel.chartStart...viewModel.chartEnd
+        )
+        .chartScrollableAxes(.horizontal)
+        .chartXVisibleDomain(
+            length: viewModel.visibleDuration
+        )
+        .chartXSelection(value: $selectedTimestamp)
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .hour)) {
+                AxisGridLine(
+                    stroke: StrokeStyle(
+                        lineWidth: 0.5,
+                        dash: [3, 3]
+                    )
+                )
+                .foregroundStyle(.secondary.opacity(0.25))
+
+                AxisTick()
+
+                AxisValueLabel(
+                    format: .dateTime.hour(),
+                    centered: true
+                )
+                .foregroundStyle(.secondary)
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading) {
+                AxisGridLine(
+                    stroke: StrokeStyle(
+                        lineWidth: 0.5,
+                        dash: [3, 3]
+                    )
+                )
+                .foregroundStyle(.secondary.opacity(0.25))
+
+                AxisValueLabel()
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(height: 220)
     }
 
-    private func formatted(_ value: Double) -> String {
-        value.rounded() == value ? String(Int(value)) : String(format: "%.1f", value)
+    @ChartContentBuilder
+    private var idealRangeMark: some ChartContent {
+        RectangleMark(
+            xStart: .value(
+                "Start",
+                viewModel.chartStart
+            ),
+            xEnd: .value(
+                "End",
+                viewModel.chartEnd
+            ),
+            yStart: .value(
+                "Ideal minimum",
+                viewModel.idealRange.lowerBound
+            ),
+            yEnd: .value(
+                "Ideal maximum",
+                viewModel.idealRange.upperBound
+            )
+        )
+        .foregroundStyle(
+            Color.theme.primaryGreen.opacity(0.22)
+        )
+    }
+
+    @ChartContentBuilder
+    private var readingMarks: some ChartContent {
+        ForEach(viewModel.hourlyReadings) { reading in
+            LineMark(
+                x: .value("Time", reading.timestamp),
+                y: .value("Reading", reading.value)
+            )
+            .interpolationMethod(.linear)
+            .lineStyle(
+                StrokeStyle(
+                    lineWidth: 2.5,
+                    lineCap: .round,
+                    lineJoin: .round
+                )
+            )
+            .foregroundStyle(tint)
+
+            PointMark(
+                x: .value("Time", reading.timestamp),
+                y: .value("Reading", reading.value)
+            )
+            .symbolSize(24)
+            .foregroundStyle(tint)
+        }
+    }
+
+    @ChartContentBuilder
+    private var selectedReadingMark: some ChartContent {
+        if let selectedReading {
+            RuleMark(
+                x: .value(
+                    "Selected time",
+                    selectedReading.timestamp
+                )
+            )
+            .foregroundStyle(tint.opacity(0.45))
+            .lineStyle(
+                StrokeStyle(
+                    lineWidth: 1,
+                    dash: [4, 4]
+                )
+            )
+            .annotation(position: .top) {
+                selectedPointPopup(
+                    for: selectedReading
+                )
+            }
+        }
+    }
+
+    private var selectedReading: HistoricalMetricReading? {
+        viewModel.selectedReading(
+            nearestTo: selectedTimestamp
+        )
+    }
+
+    private func selectedPointPopup(
+        for reading: HistoricalMetricReading
+    ) -> some View {
+        VStack(spacing: 3) {
+            Text(
+                viewModel.timestampText(for: reading)
+            )
+            .font(.caption.weight(.semibold))
+
+            Text(
+                viewModel.valueText(for: reading)
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .padding(8)
+        .background(
+            .white,
+            in: RoundedRectangle(cornerRadius: 8)
+        )
+        .shadow(
+            color: .black.opacity(0.12),
+            radius: 4,
+            y: 2
+        )
     }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview(
+    "Historical Graph — Landscape",
+    traits: .landscapeLeft
+) {
+    HistoricalLogGraphDatabasePreview()
+}
+
+@MainActor
+private struct HistoricalLogGraphDatabasePreview: View {
+    @StateObject private var previewViewModel =
+        HistoricalLogGraphPreviewViewModel()
+
+    var body: some View {
+        Group {
+            if let summaryViewModel =
+                previewViewModel.summaryViewModel {
+                ScrollView {
+                    HistoricalLogGraphView(
+                        viewModel: summaryViewModel
+                    )
+                    .padding(24)
+                }
+            } else if let errorMessage =
+                previewViewModel.errorMessage {
+                ContentUnavailableView(
+                    "Could not load preview",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(errorMessage)
+                )
+            } else {
+                ProgressView("Loading shipment data…")
+            }
+        }
+        .background(Color.theme.tertiaryGreen)
+        .frame(width: 1_024, height: 760)
+        .task {
+            await previewViewModel.load()
+        }
+    }
+}
+#endif

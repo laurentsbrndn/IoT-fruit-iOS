@@ -36,85 +36,115 @@ struct ShipmentSummaryView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 22) {
-                VStack(alignment: .leading, spacing: 28) {
-                    shipmentHeader
-                    
-                    Text("Shipment Overview")
-                        .font(.app.heading1)
-                        .foregroundColor(Color.theme.textPrimary)
-                    
-                    HStack(alignment: .top, spacing: 18) {
-                        SensorCardShipmentHistoryComponent(
-                            title: "Temperature",
-                            averageValue: viewModel.temperatureText(viewModel.averageTemperature),
-                            minValue: viewModel.temperatureText(viewModel.minimumTemperature),
-                            maxValue: viewModel.temperatureText(viewModel.maximumTemperature),
-                            status: viewModel.temperatureIsIdeal ? .ideal : .warning
-                        )
-                        
-                        SensorCardShipmentHistoryComponent(
-                            title: "Humidity",
-                            averageValue: viewModel.humidityText(viewModel.averageHumidity),
-                            minValue: viewModel.humidityText(viewModel.minimumHumidity),
-                            maxValue: viewModel.humidityText(viewModel.maximumHumidity),
-                            status: viewModel.humidityIsIdeal ? .ideal : .warning
-                        )
-                        
-                        Button {
-                            isShowingTripDetails = true
-                        } label: {
-                            // Menggunakan LocationLabelComponent dengan AnyView
-                            TripDurationCardComponent(
-                                duration: viewModel.tripDuration,
-                                origin: AnyView(LocationLabelComponent(latitude: viewModel.startCoordinate.latitude, longitude: viewModel.startCoordinate.longitude)),
-                                destination: AnyView(
-                                    Group {
-                                        if let endCoord = viewModel.endCoordinate {
-                                            LocationLabelComponent(latitude: endCoord.latitude, longitude: endCoord.longitude)
-                                        } else {
-                                            Text("In progress")
-                                                .font(.app.body)
-                                                .foregroundColor(Color.theme.textSecondary)
-                                        }
-                                    }
-                                )
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity)
-                    }
-                    
-                    HStack {
-                        Text("Historical Log")
-                            .font(.app.heading1)
-                            .foregroundColor(Color.theme.textPrimary)
-                        
-                        Spacer()
-                        
-                        Picker("Historical log display", selection: $selectedLogDisplay) {
-                            ForEach(HistoricalLogDisplay.allCases) { display in
-                                Text(display.rawValue).tag(display)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .frame(width: 280)
-                    }
-                    
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            // This header stays fixed and does not scroll.
+            shipmentHeader
                 .padding(.horizontal, 32)
                 .padding(.top, 26)
-                
-                ScrollView(showsIndicators: true) {
-                    logContent
-                        .padding(.horizontal, 32)
-                        .padding(.bottom, 32)
+                .padding(.bottom, 24)
+
+            // Only the content below the shipment information scrolls.
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(alignment: .leading, spacing: 32) {
+                    // MARK: - Shipment Overview
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Shipment Overview")
+                            .font(.app.heading1)
+                            .foregroundColor(Color.theme.textPrimary)
+
+                        HStack(alignment: .top, spacing: 18) {
+                            SensorCardShipmentHistoryComponent(
+                                title: "Temperature",
+                                averageValue: viewModel.temperatureAverageText,
+                                minValue: viewModel.temperatureMinimumText,
+                                maxValue: viewModel.temperatureMaximumText,
+                                status: viewModel.temperatureStatus
+                            )
+
+                            SensorCardShipmentHistoryComponent(
+                                title: "Humidity",
+                                averageValue: viewModel.humidityAverageText,
+                                minValue: viewModel.humidityMinimumText,
+                                maxValue: viewModel.humidityMaximumText,
+                                status: viewModel.humidityStatus
+                            )
+
+                            Button {
+                                isShowingTripDetails = true
+                            } label: {
+                                TripDurationCardComponent(
+                                    duration: viewModel.tripDuration,
+                                    origin: AnyView(
+                                        LocationLabelComponent(
+                                            latitude:
+                                                viewModel.startCoordinate.latitude,
+                                            longitude:
+                                                viewModel.startCoordinate.longitude
+                                        )
+                                    ),
+                                    destination: AnyView(
+                                        Group {
+                                            if let endCoordinate =
+                                                viewModel.endCoordinate {
+
+                                                LocationLabelComponent(
+                                                    latitude:
+                                                        endCoordinate.latitude,
+                                                    longitude:
+                                                        endCoordinate.longitude
+                                                )
+                                            } else {
+                                                Text("In progress")
+                                                    .font(.app.body)
+                                                    .foregroundColor(
+                                                        Color.theme.textSecondary
+                                                    )
+                                            }
+                                        }
+                                    )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+
+                    // MARK: - Historical Log
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("Historical Log")
+                                .font(.app.heading1)
+                                .foregroundColor(Color.theme.textPrimary)
+
+                            Spacer()
+
+                            Picker(
+                                "Historical log display",
+                                selection: $selectedLogDisplay
+                            ) {
+                                ForEach(
+                                    HistoricalLogDisplay.allCases
+                                ) { display in
+                                    Text(display.rawValue)
+                                        .tag(display)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: 280)
+                        }
+
+                        logContent
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 32)
+                .padding(.bottom, 32)
             }
-            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-            .background(Color.theme.tertiaryGreen)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.theme.tertiaryGreen)
         .task {
             await viewModel.loadSummaryData()
         }
@@ -131,7 +161,7 @@ struct ShipmentSummaryView: View {
     private var shipmentHeader: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top) {
-                Text("#\(viewModel.shipment.id.uuidString.prefix(8).uppercased())")
+                Text(viewModel.shipmentIDText)
                     .font(.system(size: 46, weight: .bold))
                     .foregroundColor(Color.theme.textPrimary)
                 
@@ -141,10 +171,19 @@ struct ShipmentSummaryView: View {
             }
             
             HStack(alignment: .top, spacing: 56) {
-                HeaderDetail(title: "Device Name", value: viewModel.shipment.device.name)
-                HeaderDetail(title: "Plate Number", value: viewModel.shipment.truckPlateNumber)
-                HeaderDetail(title: "Contact", value: "\(viewModel.shipment.driver.name) \(viewModel.shipment.driver.phoneNumber)")
-                
+                HeaderDetail(
+                    title: "Device Name",
+                    value: viewModel.deviceNameText
+                )
+                HeaderDetail(
+                    title: "Plate Number",
+                    value: viewModel.plateNumberText
+                )
+                HeaderDetail(
+                    title: "Contact",
+                    value: viewModel.contactText
+                )
+    
                 if let endCoord = viewModel.endCoordinate {
                     HeaderLocationDetail(
                         title: "Address",
@@ -184,39 +223,45 @@ struct ShipmentSummaryView: View {
     }
     
     private func exportCSV() {
-        do {
-            exportURL = try viewModel.generateCSVURL()
-            isShowingShareSheet = true
-        } catch {
-            viewModel.errorMessage = "Could not create CSV: \(error.localizedDescription)"
-        }
+        presentExport(
+            viewModel.prepareCSVExport()
+        )
     }
-    
+
     private func exportGraphPNG() {
-        let graph = HistoricalLogGraphView(viewModel: viewModel)
-            .frame(width: 1_200)
-            .padding(32)
-            .background(Color.theme.tertiaryGreen)
-        
-        let renderer = ImageRenderer(content: graph)
+        // ImageRenderer stays in the View because it renders SwiftUI.
+        let graph = HistoricalLogGraphView(
+            viewModel: viewModel
+        )
+        .frame(width: 1_200)
+        .padding(32)
+        .background(Color.theme.tertiaryGreen)
+
+        let renderer = ImageRenderer(
+            content: graph
+        )
+
         renderer.scale = UIScreen.main.scale
-        
-        guard let pngData = renderer.uiImage?.pngData() else {
-            viewModel.errorMessage = "Could not create graph image."
+
+        let pngData =
+            renderer.uiImage?.pngData()
+
+        presentExport(
+            viewModel.prepareGraphPNGExport(
+                from: pngData
+            )
+        )
+    }
+
+    private func presentExport(
+        _ url: URL?
+    ) {
+        guard let url else {
             return
         }
-        
-        let shipmentID = viewModel.shipment.id.uuidString.prefix(8).uppercased()
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("Shipment_\(shipmentID)_Historical_Graph.png")
-        
-        do {
-            try pngData.write(to: url, options: [.atomic])
-            exportURL = url
-            isShowingShareSheet = true
-        } catch {
-            viewModel.errorMessage = "Could not save graph image: \(error.localizedDescription)"
-        }
+
+        exportURL = url
+        isShowingShareSheet = true
     }
     
     @ViewBuilder private var logContent: some View {
@@ -288,3 +333,45 @@ private struct ActivitySheet: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+
+#if DEBUG
+#Preview(
+    "Shipment Summary — Landscape",
+    traits: .landscapeLeft
+) {
+    ShipmentSummaryDatabasePreview()
+}
+
+@MainActor
+private struct ShipmentSummaryDatabasePreview: View {
+    @StateObject private var previewLoader =
+        HistoricalLogGraphPreviewViewModel()
+
+    var body: some View {
+        Group {
+            if let summaryViewModel =
+                previewLoader.summaryViewModel {
+
+                ShipmentSummaryView(
+                    shipment: summaryViewModel.shipment
+                )
+
+            } else if let errorMessage =
+                previewLoader.errorMessage {
+
+                ContentUnavailableView(
+                    "Could not load preview",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(errorMessage)
+                )
+
+            } else {
+                ProgressView("Loading shipment data…")
+            }
+        }
+        .task {
+            await previewLoader.load()
+        }
+    }
+}
+#endif

@@ -7,17 +7,17 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "B296BB6E-5617-4A6B-B8E8-316119391D8E"
-            shouldBeEnabled = "No"
+            uuid = "41D74359-4E27-46F3-8BD2-0E09E7436879"
+            shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "BIKI LiveTrack/Features/ShipmentSummary/Views/ShipmentSummaryView.swift"
+            filePath = "BIKI LiveTrack/Features/ShipmentSummary/Views/HistoricalLogGraphView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "271"
-            endingLineNumber = "271"
-            landmarkName = "log(minutes:temperature:humidity:latitude:longitude:)"
-            landmarkType = "7">
+            startingLineNumber = "175"
+            endingLineNumber = "175"
+            landmarkName = "selectedReadingMark"
+            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
