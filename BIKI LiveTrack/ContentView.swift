@@ -50,7 +50,6 @@ struct ContentView: View {
                 .navigationBarTitleDisplayMode(.inline)
             }
         }
-        // Tambahkan modifier ini untuk membuat layout sidebar menjadi fixed
         .navigationSplitViewStyle(.balanced)
     }
 }

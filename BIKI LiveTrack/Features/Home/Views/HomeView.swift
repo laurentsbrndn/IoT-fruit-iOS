@@ -9,23 +9,15 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
-    
-    // State untuk merekam jejak lebar maksimal dari layar secara dinamis
     @State private var maxScreenWidth: CGFloat = 0
     
+    private let autoRefreshInterval: UInt64 = 60
+    
     var body: some View {
-        GeometryReader { geometry in
-            // Kalkulasi lebar dinamis dengan BATAS MINIMUM (mencegah shrink)
-            // Jika layar menyempit, kolom tidak akan lebih kecil dari 320
-            let dynamicLiveColumnWidth = max(320, (geometry.size.width - 80) / 3)
-            
-            // Kartu history tidak akan lebih kecil dari 360
-            let dynamicHistoryCardWidth = max(360, geometry.size.width * 0.38)
-            
-            VStack(alignment: .leading, spacing: 32) {
-                // ... (Sisa kode HomeView Anda biarkan sama persis)
-                
-                // MARK: - Recently Delivered Section
+        let dynamicLiveColumnWidth = max(320, (windowWidth - 80) / 3)
+        let dynamicHistoryCardWidth = max(360, windowWidth * 0.38)
+        
+        VStack(alignment: .leading, spacing: 32) {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Recently Delivered (\(viewModel.deliveredShipments.count))")
                         .font(.system(size: 32, weight: .bold))
@@ -44,17 +36,20 @@ struct HomeView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
                                 ForEach(viewModel.deliveredShipments) { shipment in
-                                    ShipmentHistoryInfoCardComponent(
-                                        shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
-                                        statusText: "Delivered",
-                                        statusDate: formatShipmentDate(shipment.endDate),
-                                        latitude: shipment.endLatitude ?? 0.0,
-                                        longitude: shipment.endLongitude ?? 0.0,
-                                        driverName: shipment.driver.name,
-                                        driverContact: shipment.driver.phoneNumber
-                                    )
-                                    // Menggunakan lebar dinamis hasil GeometryReader
+                                    NavigationLink(destination: ShipmentSummaryView(shipment: shipment)) {
+                                        ShipmentHistoryInfoCardComponent(
+                                            shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
+                                            statusText: "Delivered",
+                                            statusDate: formatShipmentDate(shipment.endDate),
+                                            latitude: shipment.endLatitude ?? 0.0,
+                                            longitude: shipment.endLongitude ?? 0.0,
+                                            driverName: shipment.driver.name,
+                                            driverContact: shipment.driver.phoneNumber
+                                        )
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
                                     .frame(width: dynamicHistoryCardWidth)
+                                    
                                 }
                             }
                             .padding(.horizontal, 24)
@@ -62,8 +57,6 @@ struct HomeView: View {
                     }
                 }
                 .padding(.top, 16)
-                
-                // MARK: - Currently Live Section
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Currently Live")
                         .font(.system(size: 32, weight: .bold))
@@ -87,7 +80,7 @@ struct HomeView: View {
                                     dotColor: Color.theme.primaryGreen,
                                     count: idealShipments.count,
                                     shipments: idealShipments,
-                                    columnWidth: dynamicLiveColumnWidth // Passing calculated width
+                                    columnWidth: dynamicLiveColumnWidth
                                 )
                                 
                                 liveColumnView(
@@ -114,14 +107,24 @@ struct HomeView: View {
                 }
                 .frame(maxHeight: .infinity)
             }
-            .padding(.bottom, 24)
-            .background(Color.clear)
-        }
+        .padding(.bottom, 24)
+        .background(Color.clear)
         .refreshable {
-            await viewModel.loadHomeData()
+            await viewModel.loadHomeData(showLoading: false)
         }
         .task {
             await viewModel.loadHomeData()
+            
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(nanoseconds: autoRefreshInterval * 1_000_000_000)
+                } catch {
+                    break
+                }
+                
+                guard !Task.isCancelled else { break }
+                await viewModel.loadHomeData(showLoading: false)
+            }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -140,7 +143,6 @@ struct HomeView: View {
         }
     }
     
-    // Menambahkan parameter columnWidth agar ukurannya mengikuti GeometryReader
     @ViewBuilder
     private func liveColumnView(title: String, dotColor: Color, count: Int, shipments: [Shipment], isCountHighlighted: Bool = false, columnWidth: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -159,14 +161,17 @@ struct HomeView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 16) {
                     ForEach(shipments) { shipment in
-                        ShipmentLiveInfoCardComponent(
-                            shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
-                            status: viewModel.shipmentStatuses[shipment.id] ?? .ideal,
-                            latitude: shipment.endLatitude ?? 0.0,
-                            longitude: shipment.endLongitude ?? 0.0,
-                            driverName: shipment.driver.name,
-                            driverContact: shipment.driver.phoneNumber
-                        )
+                        NavigationLink(destination: LiveShipmentView(shipment: shipment)) {
+                            ShipmentLiveInfoCardComponent(
+                                shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
+                                status: viewModel.shipmentStatuses[shipment.id] ?? .ideal,
+                                latitude: shipment.endLatitude ?? 0.0,
+                                longitude: shipment.endLongitude ?? 0.0,
+                                driverName: shipment.driver.name,
+                                driverContact: shipment.driver.phoneNumber
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(.bottom, 16)
@@ -175,7 +180,7 @@ struct HomeView: View {
         .padding(16)
         .background(Color.theme.FrameCard)
         .cornerRadius(16)
-        .frame(width: columnWidth) // Menggunakan variabel dinamis dari parameter
+        .frame(width: columnWidth)
         .frame(maxHeight: .infinity)
     }
     

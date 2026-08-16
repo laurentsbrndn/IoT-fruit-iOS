@@ -10,15 +10,10 @@ import SwiftUI
 struct ShipmentHistoryView: View {
     @StateObject private var viewModel = ShipmentHistoryViewModel()
     
-    // State untuk menyimpan rekam jejak lebar maksimal dari layar secara dinamis
     @State private var tableContentWidth: CGFloat = 0
     
     var body: some View {
-        // Bungkus keseluruhan layar dengan GeometryReader
-        GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 24) {
-                
-                // MARK: - Top Section (Tetap Shrink Mengikuti Device)
+        VStack(alignment: .leading, spacing: 24) {
                 HStack(alignment: .center) {
                     Text("Shipment History")
                         .font(.system(size: 36, weight: .bold))
@@ -64,7 +59,6 @@ struct ShipmentHistoryView: View {
                 .foregroundColor(Color.theme.textSecondary)
                 .padding(.horizontal, 32)
                 
-                // MARK: - Table & Pagination Section (Dynamic Width + Horizontal Scroll)
                 ScrollView(.horizontal, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 0) {
                         
@@ -89,7 +83,6 @@ struct ShipmentHistoryView: View {
                         .padding(.horizontal, 32)
                         .padding(.bottom, 16)
                         
-                        // 2. Konten Baris & Pagination
                         if viewModel.isLoading && viewModel.completedShipments.isEmpty {
                             ProgressView()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -98,7 +91,6 @@ struct ShipmentHistoryView: View {
                                 ScrollView(showsIndicators: false) {
                                     LazyVStack(spacing: 12) {
                                         ForEach(Array(viewModel.paginatedShipments.enumerated()), id: \.element.id) { index, shipment in
-                                            // Bungkus komponen row dengan NavigationLink
                                             NavigationLink(destination: ShipmentSummaryView(shipment: shipment)) {
                                                 ShipmentHistoryRowComponent(
                                                     shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
@@ -123,7 +115,7 @@ struct ShipmentHistoryView: View {
                                                     }
                                                 )
                                             }
-                                            .buttonStyle(.plain) // Tambahkan ini agar styling tombol default (teks biru) tidak merusak desain row
+                                            .buttonStyle(.plain)
                                         }
                                     }
                                     .padding(.horizontal, 32)
@@ -133,7 +125,6 @@ struct ShipmentHistoryView: View {
                                     await viewModel.loadHistoryData()
                                 }
                                 
-                                // 3. Pagination
                                 HStack(spacing: 16) {
                                     Button(action: {
                                         if viewModel.currentPage > 1 { viewModel.currentPage -= 1 }
@@ -186,16 +177,14 @@ struct ShipmentHistoryView: View {
                             }
                         }
                     }
-                    // Mengunci tabel ke lebar layar perangkat, berapapun ukurannya
-                    .frame(minWidth: geometry.size.width)
+                    .frame(minWidth: windowWidth)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-        .background(Color.clear)
-        .task {
-            await viewModel.loadHistoryData()
-        }
+            .background(Color.clear)
+            .task {
+                await viewModel.loadHistoryData()
+            }
     }
 }
 

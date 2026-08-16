@@ -15,26 +15,10 @@ struct AlertType: Identifiable, Codable {
     let description: String?
     
     enum CodingKeys: String, CodingKey {
-        case id = "alert_type_id"
-        case title = "alert_types_title"
-        case severity = "alert_types_severity"
-        case category = "alert_types_category"
-        case description = "alert_types_description"
-    }
-}
-
-extension AlertType {
-    var iconName: String {
-        switch title {
-        case "High Humidity": return "humidity.fill"
-        case "Low Humidity": return "humidity"
-        case "Humidity Normalized": return "drop.fill"
-        case "Lost Connection": return "wifi.slash"
-        case "Connection Back": return "wifi"
-        case "High Temperature": return "thermometer.sun"
-        case "Low Temperature": return "thermometer.snowflake"
-        case "Temperature Normalized": return "thermometer.variable"
-        default: return "bell.fill"
-        }
+        case id = "id"
+        case title = "title"
+        case severity = "severity"
+        case category = "category"
+        case description = "description"
     }
 }

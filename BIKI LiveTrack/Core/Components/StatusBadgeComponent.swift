@@ -54,7 +54,7 @@ struct StatusBadgeComponent: View {
     var body: some View {
         Text(status.title)
         .font(.app.bodyBold)
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 25)
         .padding(.vertical, 2)
         .foregroundColor(status.foregroundColor)
         .background(status.backgroundColor)

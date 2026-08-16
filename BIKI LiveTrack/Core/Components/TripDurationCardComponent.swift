@@ -9,8 +9,8 @@ import SwiftUI
 
 struct TripDurationCardComponent: View {
     var duration: String
-    var origin: AnyView // Diubah menjadi AnyView
-    var destination: AnyView // Diubah menjadi AnyView
+    var origin: AnyView
+    var destination: AnyView
     
     var body: some View {
         VStack(spacing: 16) {
