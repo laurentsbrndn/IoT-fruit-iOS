@@ -73,6 +73,7 @@ struct SensorCardShipmentHistoryComponent: View {
         }
         .padding(24)
         .frame(width: 300, height: 209)
+//        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.1), radius: 4, y: 4)

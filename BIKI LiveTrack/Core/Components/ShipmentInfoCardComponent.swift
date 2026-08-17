@@ -35,7 +35,7 @@ struct ShipmentLiveInfoCardComponent: View {
                 
                 HStack(spacing: 4) {
                     Image(systemName: "location")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                     
                     LocationLabelComponent(
                         latitude: latitude,

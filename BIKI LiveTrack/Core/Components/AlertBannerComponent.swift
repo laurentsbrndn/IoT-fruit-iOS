@@ -25,11 +25,11 @@ struct AlertBannerComponent: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.app.title2)
+                    .font(.app.title1)
                     .foregroundColor(textColor)
 
                 Text(message)
-                    .font(.app.title1)
+                    .font(.app.body)
                     .foregroundColor(textColor.opacity(0.75))
             }
             
@@ -37,7 +37,7 @@ struct AlertBannerComponent: View {
             
             VStack {
                 Text(timeString)
-                    .font(.system(size: 14, weight: .regular))
+                    .font(.app.caption)
                     .foregroundColor(textColor)
                 Spacer()
             }

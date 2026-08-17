@@ -13,7 +13,7 @@ struct TripDurationCardComponent: View {
     var destination: AnyView
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 10) {
             ZStack {
                 Text("Trip Duration")
                     .font(.system(size: 18, weight: .semibold))
@@ -28,7 +28,7 @@ struct TripDurationCardComponent: View {
             }
             
             Text(duration)
-                .font(.system(size: 64, weight: .regular))
+                .font(.system(size: 56, weight: .regular))
                 .monospacedDigit()
                 .foregroundColor(Color.theme.textPrimary)
                 .padding(.vertical, 4)
@@ -38,12 +38,14 @@ struct TripDurationCardComponent: View {
                 origin
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(Color.theme.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Spacer()
                 
                 Image(systemName: "arrow.right")
                     .font(.system(size: 18, weight: .light))
                     .foregroundColor(Color.theme.textSecondary)
+                    .layoutPriority(1)
                 
                 Spacer()
                 
@@ -51,9 +53,13 @@ struct TripDurationCardComponent: View {
                 destination
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(Color.theme.textSecondary)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .padding(24)
+        .frame(height: 209)
+//        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
         .cornerRadius(15)
     }
@@ -66,8 +72,8 @@ struct TripDurationCardComponent: View {
         TripDurationCardComponent(
             duration: "10:45:09",
             // Preview disesuaikan agar mengirimkan AnyView
-            origin: AnyView(Text("BIKI point SMG")),
-            destination: AnyView(Text("Ranch Market BSD"))
+            origin: AnyView(Text("Jalan Tambara No. 85, Semarang")),
+            destination: AnyView(Text("National Monument, Central Jakarta"))
         )
         .padding()
     }
