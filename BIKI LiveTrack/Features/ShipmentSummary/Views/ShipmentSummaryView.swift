@@ -42,18 +42,18 @@ struct ShipmentSummaryView: View {
                 .padding(.horizontal, 32)
                 .padding(.top, 26)
                 .padding(.bottom, 24)
-
+            
             // Only the content below the shipment information scrolls.
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(alignment: .leading, spacing: 32) {
                     // MARK: - Shipment Overview
-
+                    
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Shipment Overview")
                             .font(.app.heading1)
                             .foregroundColor(Color.theme.textPrimary)
-
-                        HStack(alignment: .top, spacing: 18) {
+                        
+                        HStack(alignment: .top, spacing: 22) {
                             SensorCardShipmentHistoryComponent(
                                 title: "Temperature",
                                 averageValue: viewModel.temperatureAverageText,
@@ -61,7 +61,7 @@ struct ShipmentSummaryView: View {
                                 maxValue: viewModel.temperatureMaximumText,
                                 status: viewModel.temperatureStatus
                             )
-
+                            
                             SensorCardShipmentHistoryComponent(
                                 title: "Humidity",
                                 averageValue: viewModel.humidityAverageText,
@@ -69,7 +69,7 @@ struct ShipmentSummaryView: View {
                                 maxValue: viewModel.humidityMaximumText,
                                 status: viewModel.humidityStatus
                             )
-
+                            
                             Button {
                                 isShowingTripDetails = true
                             } label: {
@@ -87,7 +87,7 @@ struct ShipmentSummaryView: View {
                                         Group {
                                             if let endCoordinate =
                                                 viewModel.endCoordinate {
-
+                                                
                                                 LocationLabelComponent(
                                                     latitude:
                                                         endCoordinate.latitude,
@@ -109,17 +109,17 @@ struct ShipmentSummaryView: View {
                             .frame(maxWidth: .infinity)
                         }
                     }
-
+                    
                     // MARK: - Historical Log
-
+                    
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text("Historical Log")
                                 .font(.app.heading1)
                                 .foregroundColor(Color.theme.textPrimary)
-
+                            
                             Spacer()
-
+                            
                             Picker(
                                 "Historical log display",
                                 selection: $selectedLogDisplay
@@ -134,7 +134,7 @@ struct ShipmentSummaryView: View {
                             .pickerStyle(.segmented)
                             .frame(width: 280)
                         }
-
+                        
                         logContent
                     }
                 }
@@ -183,7 +183,7 @@ struct ShipmentSummaryView: View {
                     title: "Contact",
                     value: viewModel.contactText
                 )
-    
+                
                 if let endCoord = viewModel.endCoordinate {
                     HeaderLocationDetail(
                         title: "Address",
@@ -211,39 +211,39 @@ struct ShipmentSummaryView: View {
             viewModel.prepareCSVExport()
         )
     }
-
+    
     private func exportGraphPNG() {
         // ImageRenderer stays in the View because it renders SwiftUI.
         let graph = HistoricalLogGraphView(
             viewModel: viewModel
         )
-        .frame(width: 1_200)
-        .padding(32)
-        .background(Color.theme.tertiaryGreen)
-
+            .frame(width: 1_200)
+            .padding(32)
+            .background(Color.theme.tertiaryGreen)
+        
         let renderer = ImageRenderer(
             content: graph
         )
-
+        
         renderer.scale = UIScreen.main.scale
-
+        
         let pngData =
-            renderer.uiImage?.pngData()
-
+        renderer.uiImage?.pngData()
+        
         presentExport(
             viewModel.prepareGraphPNGExport(
                 from: pngData
             )
         )
     }
-
+    
     private func presentExport(
         _ url: URL?
     ) {
         guard let url else {
             return
         }
-
+        
         exportURL = url
         isShowingShareSheet = true
     }
@@ -299,7 +299,7 @@ private struct HeaderLocationDetail: View {
                 .foregroundColor(Color.theme.textSecondary)
             
             LocationLabelComponent(latitude: latitude, longitude: longitude)
-                // Styling dibuat semirip mungkin dengan teks "value" di HeaderDetail
+            // Styling dibuat semirip mungkin dengan teks "value" di HeaderDetail
                 .font(.app.bodyBold)
                 .foregroundColor(Color.theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -329,26 +329,26 @@ private struct ActivitySheet: UIViewControllerRepresentable {
 @MainActor
 private struct ShipmentSummaryDatabasePreview: View {
     @StateObject private var previewLoader =
-        HistoricalLogGraphPreviewViewModel()
-
+    HistoricalLogGraphPreviewViewModel()
+    
     var body: some View {
         Group {
             if let summaryViewModel =
                 previewLoader.summaryViewModel {
-
+                
                 ShipmentSummaryView(
                     shipment: summaryViewModel.shipment
                 )
-
+                
             } else if let errorMessage =
-                previewLoader.errorMessage {
-
+                        previewLoader.errorMessage {
+                
                 ContentUnavailableView(
                     "Could not load preview",
                     systemImage: "exclamationmark.triangle",
                     description: Text(errorMessage)
                 )
-
+                
             } else {
                 ProgressView("Loading shipment data…")
             }
