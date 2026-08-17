@@ -200,26 +200,10 @@ struct ShipmentSummaryView: View {
     }
     
     private var exportMenu: some View {
-        Menu {
-            Button {
-                exportCSV()
-            } label: {
-                Label("Export Data\nAs CSV", systemImage: "square.and.arrow.up")
-            }
-            
-            Button {
-                exportGraphPNG()
-            } label: {
-                Label("Export Graph\nAs PNG", systemImage: "square.and.arrow.up")
-            }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 21, weight: .bold))
-                .foregroundColor(Color.theme.textPrimary)
-                .frame(width: 48, height: 48)
-                .background(.ultraThinMaterial, in: Circle())
-        }
-        .accessibilityLabel("Export options")
+        ShipmentSummaryMenuComponent(
+            onExportCSV: exportCSV,
+            onExportGraphPNG: exportGraphPNG
+        )
     }
     
     private func exportCSV() {
