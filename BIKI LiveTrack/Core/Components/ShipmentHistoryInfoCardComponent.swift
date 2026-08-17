@@ -32,16 +32,16 @@ struct ShipmentHistoryInfoCardComponent: View {
                             Spacer(minLength: 12)
                         }
                         
-                        HStack(spacing: 4) {
+                        HStack(alignment :.top, spacing: 4) {
                             Image(systemName: "location")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.primary)
                             
                             LocationLabelComponent(
                                 latitude: latitude,
                                 longitude: longitude
                             )
                         }
-                        .foregroundStyle(.secondary)
+//                        .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
 

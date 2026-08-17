@@ -20,7 +20,7 @@ struct SensorCardActiveShipmentComponent: View {
     
     var body: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 22) {
                 HStack(spacing: 4) {
                     Text(title)
                         .font(.system(size: 20, weight: .semibold))
@@ -48,7 +48,8 @@ struct SensorCardActiveShipmentComponent: View {
             )
         }
         .padding(24)
-        .frame(width: 334, height: 181)
+        .frame(width: 300, height: 209)
+//        .frame(maxWidth: .infinity, alignment: .leading)
         .background(isOffline ? Color.theme.grey : Color.white)
         .cornerRadius(20)
         .shadow(color: isOffline ? .clear : .black.opacity(0.08), radius: 4, y: 4)

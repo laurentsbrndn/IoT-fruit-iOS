@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     @State private var maxScreenWidth: CGFloat = 0
+    @State private var isShowingAddShipment: Bool = false
     
     private let autoRefreshInterval: UInt64 = 60
     
@@ -18,95 +19,95 @@ struct HomeView: View {
         let dynamicHistoryCardWidth = max(360, windowWidth * 0.38)
         
         VStack(alignment: .leading, spacing: 32) {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Recently Delivered (\(viewModel.deliveredShipments.count))")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(Color.theme.textPrimary)
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Recently Delivered (\(viewModel.deliveredShipments.count))")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(Color.theme.textPrimary)
+                    .padding(.horizontal, 24)
+                
+                if viewModel.isLoading && viewModel.deliveredShipments.isEmpty {
+                    ProgressView()
+                        .padding(.top, 20)
                         .padding(.horizontal, 24)
-                    
-                    if viewModel.isLoading && viewModel.deliveredShipments.isEmpty {
-                        ProgressView()
-                            .padding(.top, 20)
-                            .padding(.horizontal, 24)
-                    } else if viewModel.deliveredShipments.isEmpty {
-                        Text("No delivered shipments yet.")
-                            .foregroundColor(Color.theme.textSecondary)
-                            .padding(.horizontal, 24)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 16) {
-                                ForEach(viewModel.deliveredShipments) { shipment in
-                                    NavigationLink(destination: ShipmentSummaryView(shipment: shipment)) {
-                                        ShipmentHistoryInfoCardComponent(
-                                            shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
-                                            statusText: "Delivered",
-                                            statusDate: formatShipmentDate(shipment.endDate),
-                                            latitude: shipment.endLatitude ?? 0.0,
-                                            longitude: shipment.endLongitude ?? 0.0,
-                                            driverName: shipment.driver.name,
-                                            driverContact: shipment.driver.phoneNumber
-                                        )
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                    .frame(width: dynamicHistoryCardWidth)
-                                    
+                } else if viewModel.deliveredShipments.isEmpty {
+                    Text("No delivered shipments yet.")
+                        .foregroundColor(Color.theme.primaryGreen)
+                        .padding(.horizontal, 24)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 16) {
+                            ForEach(viewModel.deliveredShipments) { shipment in
+                                NavigationLink(destination: ShipmentSummaryView(shipment: shipment)) {
+                                    ShipmentHistoryInfoCardComponent(
+                                        shipmentID: "#\(shipment.id.uuidString.prefix(8).uppercased())",
+                                        statusText: "Delivered",
+                                        statusDate: formatShipmentDate(shipment.endDate),
+                                        latitude: shipment.endLatitude ?? 0.0,
+                                        longitude: shipment.endLongitude ?? 0.0,
+                                        driverName: shipment.driver.name,
+                                        driverContact: shipment.driver.phoneNumber
+                                    )
                                 }
+                                .buttonStyle(PlainButtonStyle())
+                                .frame(width: dynamicHistoryCardWidth)
+                                
                             }
-                            .padding(.horizontal, 24)
                         }
-                    }
-                }
-                .padding(.top, 16)
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Currently Live")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(Color.theme.textPrimary)
                         .padding(.horizontal, 24)
-                    
-                    if viewModel.isLoading && viewModel.activeShipments.isEmpty {
-                        ProgressView()
-                            .padding(.top, 20)
-                            .padding(.horizontal, 24)
-                    } else if viewModel.activeShipments.isEmpty {
-                        Text("No active shipments at the moment.")
-                            .foregroundColor(Color.theme.textSecondary)
-                            .padding(.horizontal, 24)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(alignment: .top, spacing: 16) {
-                                
-                                liveColumnView(
-                                    title: "All systems in ideal conditions",
-                                    dotColor: Color.theme.primaryGreen,
-                                    count: idealShipments.count,
-                                    shipments: idealShipments,
-                                    columnWidth: dynamicLiveColumnWidth
-                                )
-                                
-                                liveColumnView(
-                                    title: "Need attentions",
-                                    dotColor: Color.theme.primaryYellow,
-                                    count: warningShipments.count,
-                                    shipments: warningShipments,
-                                    columnWidth: dynamicLiveColumnWidth
-                                )
-                                
-                                liveColumnView(
-                                    title: "Devices are not connected",
-                                    dotColor: Color.theme.primaryRed,
-                                    count: offlineShipments.count,
-                                    shipments: offlineShipments,
-                                    isCountHighlighted: true,
-                                    columnWidth: dynamicLiveColumnWidth
-                                )
-                            }
-                            .padding(.horizontal, 24)
-                            .frame(maxHeight: .infinity)
-                        }
                     }
                 }
-                .frame(maxHeight: .infinity)
             }
+            .padding(.top, 16)
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Currently Live")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(Color.theme.textPrimary)
+                    .padding(.horizontal, 24)
+                
+                if viewModel.isLoading && viewModel.activeShipments.isEmpty {
+                    ProgressView()
+                        .padding(.top, 20)
+                        .padding(.horizontal, 24)
+                } else if viewModel.activeShipments.isEmpty {
+                    Text("No active shipments at the moment.")
+                        .foregroundColor(Color.theme.textSecondary)
+                        .padding(.horizontal, 24)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: 16) {
+                            
+                            liveColumnView(
+                                title: "All systems in ideal conditions",
+                                dotColor: Color.theme.primaryGreen,
+                                count: idealShipments.count,
+                                shipments: idealShipments,
+                                columnWidth: dynamicLiveColumnWidth
+                            )
+                            
+                            liveColumnView(
+                                title: "Need attentions",
+                                dotColor: Color.theme.primaryYellow,
+                                count: warningShipments.count,
+                                shipments: warningShipments,
+                                columnWidth: dynamicLiveColumnWidth
+                            )
+                            
+                            liveColumnView(
+                                title: "Devices are not connected",
+                                dotColor: Color.theme.primaryRed,
+                                count: offlineShipments.count,
+                                shipments: offlineShipments,
+                                isCountHighlighted: true,
+                                columnWidth: dynamicLiveColumnWidth
+                            )
+                        }
+                        .padding(.horizontal, 24)
+                        .frame(maxHeight: .infinity)
+                    }
+                }
+            }
+            .frame(maxHeight: .infinity)
+        }
         .padding(.bottom, 24)
         .background(Color.clear)
         .refreshable {
@@ -127,20 +128,15 @@ struct HomeView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    print("Tombol Plus ditekan dari HomeView")
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.primary)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Add Shipment", systemImage: "plus") {
+                            isShowingAddShipment = true
+                        }
+                    }
                 }
-            }
-        }
+                .sheet(isPresented: $isShowingAddShipment) {
+                    AddShipmentView()
+                }
     }
     
     @ViewBuilder
