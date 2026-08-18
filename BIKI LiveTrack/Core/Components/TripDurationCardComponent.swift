@@ -61,7 +61,12 @@ struct TripDurationCardComponent: View {
         .frame(height: 209)
 //        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
-        .cornerRadius(15)
+        .cornerRadius(20)
+        .shadow(
+            color: .black.opacity(0.08),
+            radius: 4,
+            y: 4
+        )
     }
 }
 

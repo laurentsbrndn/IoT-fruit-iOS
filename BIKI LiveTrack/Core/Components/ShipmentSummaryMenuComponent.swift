@@ -10,6 +10,8 @@ import SwiftUI
 struct ShipmentSummaryMenuComponent: View {
     let onExportCSV: () -> Void
     let onExportGraphPNG: () -> Void
+    let onAdjustStartDateTime: () -> Void
+    let onAdjustEndDateTime: () -> Void
 
     var body: some View {
         Menu {
@@ -30,20 +32,35 @@ struct ShipmentSummaryMenuComponent: View {
                     systemImage: "square.and.arrow.up"
                 )
             }
+
+            Divider()
+
+            Button {
+                onAdjustStartDateTime()
+            } label: {
+                Label(
+                    "Adjust Start Date & Time",
+                    systemImage: "calendar.badge.clock"
+                )
+            }
+
+            Button {
+                onAdjustEndDateTime()
+            } label: {
+                Label(
+                    "Adjust End Date & Time",
+                    systemImage: "calendar.badge.clock"
+                )
+            }
         } label: {
             Image(systemName: "ellipsis")
-                .font(
-                    .system(
-                        size: 20,
-                        weight: .semibold
-                    )
-                )
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.primary)
                 .frame(width: 44, height: 44)
                 .background(Color.white)
                 .clipShape(Circle())
         }
-        .accessibilityLabel("Export options")
+        .accessibilityLabel("Shipment options")
     }
 }
 
@@ -53,12 +70,10 @@ struct ShipmentSummaryMenuComponent: View {
             .ignoresSafeArea()
 
         ShipmentSummaryMenuComponent(
-            onExportCSV: {
-                print("Export CSV")
-            },
-            onExportGraphPNG: {
-                print("Export PNG")
-            }
+            onExportCSV: {},
+            onExportGraphPNG: {},
+            onAdjustStartDateTime: {},
+            onAdjustEndDateTime: {}
         )
     }
 }

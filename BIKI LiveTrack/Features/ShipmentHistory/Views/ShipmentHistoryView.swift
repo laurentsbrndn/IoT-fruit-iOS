@@ -14,50 +14,88 @@ struct ShipmentHistoryView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-                HStack(alignment: .center) {
+           
+            VStack(alignment: .leading, spacing: 16) {
+                // First header row:
+                // page title, search bar and three-dot menu.
+                HStack(alignment: .top) {
                     Text("Shipment History")
-                        .font(.system(size: 36, weight: .bold))
-                        .foregroundColor(Color.theme.textPrimary)
-                    
+                        .font(
+                            .system(
+                                size: 42,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundColor(
+                            Color.theme.textPrimary
+                        )
+
                     Spacer()
-                    
+
                     HStack(spacing: 16) {
+                        // Search field
                         HStack(spacing: 8) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(Color.theme.textSecondary)
-                            TextField("Search", text: $viewModel.searchText)
-                                .foregroundColor(Color.theme.textPrimary)
-                                .autocorrectionDisabled()
+                            Image(
+                                systemName: "magnifyingglass"
+                            )
+                            .foregroundStyle(.secondary)
+
+                            TextField(
+                                "Search",
+                                text: $viewModel.searchText
+                            )
+                            .font(.app.body)
+                            .foregroundColor(
+                                Color.theme.textPrimary
+                            )
+                            .autocorrectionDisabled()
                         }
                         .padding(.horizontal, 16)
-                        .frame(height: 44)
+                        .frame(
+                            width: 280,
+                            height: 44
+                        )
                         .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 22))
-                        .frame(width: 280)
-                        
-                        ShipmentHistoryMenuComponent(viewModel: viewModel)
+                        .clipShape(
+                            RoundedRectangle(
+                                cornerRadius: 22,
+                                style: .continuous
+                            )
+                        )
+
+                        // Three-dot button
+                        ShipmentHistoryMenuComponent(
+                            viewModel: viewModel
+                        )
                     }
                 }
-                .padding(.horizontal, 32)
-                .padding(.top, 24)
-                .onChange(of: viewModel.searchText) { _ in
-                    viewModel.currentPage = 1
-                }
-                
+
+                // Second header row:
+                // shipment count, last update and showing count.
                 HStack {
                     HStack(spacing: 8) {
-                        Text("\(viewModel.completedShipments.count) completed shipments")
+                        Text(
+                            "\(viewModel.completedShipments.count) completed shipments"
+                        )
+
                         Text("•")
-                        Text("Last updated \(viewModel.formatDate(viewModel.lastUpdated))")
+
+                        Text(
+                            "Last updated \(viewModel.formatDate(viewModel.lastUpdated))"
+                        )
                     }
-                    
+
                     Spacer()
-                    
+
                     Text(viewModel.showingText)
                 }
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(Color.theme.textSecondary)
-                .padding(.horizontal, 32)
+                .font(.app.body)
+                .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 24)
+            .onChange(of: viewModel.searchText) { _ in
+                viewModel.currentPage = 1
+            }
                 
                 ScrollView(.horizontal, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 0) {
@@ -181,7 +219,10 @@ struct ShipmentHistoryView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(Color.clear)
+            .background(
+                Color.theme.tertiaryGreen
+                    .ignoresSafeArea()
+            )
             .task {
                 await viewModel.loadHistoryData()
             }

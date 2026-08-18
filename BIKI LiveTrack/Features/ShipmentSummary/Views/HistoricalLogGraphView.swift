@@ -32,6 +32,9 @@ private struct HistoricalMetricChart: View {
     let tint: Color
 
     @State private var selectedTimestamp: Date?
+    
+    private let idealRangeColor =
+        Color.theme.primaryGreen.opacity(0.22)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -47,8 +50,25 @@ private struct HistoricalMetricChart: View {
 
     private var chartHeader: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(viewModel.title)
-                .font(.app.bodyBold)
+            HStack(alignment: .center, spacing: 12) {
+                Text(viewModel.title)
+                    .font(.app.bodyBold)
+
+                Spacer()
+
+                HStack(spacing: 8) {
+                    Rectangle()
+                        .fill(idealRangeColor)
+                        .frame(
+                            width: 32,
+                            height: 14
+                        )
+
+                    Text("Ideal")
+                        .font(.app.body)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             Text(viewModel.averageText)
                 .font(.system(size: 28, weight: .semibold))
@@ -72,7 +92,7 @@ private struct HistoricalMetricChart: View {
         )
         .chartXSelection(value: $selectedTimestamp)
         .chartXAxis {
-            AxisMarks(values: .stride(by: .hour)) {
+            AxisMarks(values: .stride(by: .hour)) { axisValue in
                 AxisGridLine(
                     stroke: StrokeStyle(
                         lineWidth: 0.5,
@@ -83,10 +103,13 @@ private struct HistoricalMetricChart: View {
 
                 AxisTick()
 
-                AxisValueLabel(
-                    format: .dateTime.hour(),
-                    centered: true
-                )
+                AxisValueLabel(centered: true) {
+                    if let date = axisValue.as(Date.self) {
+                        Text(
+                            viewModel.hourText(for: date)
+                        )
+                    }
+                }
                 .foregroundStyle(.secondary)
             }
         }
@@ -127,14 +150,12 @@ private struct HistoricalMetricChart: View {
                 viewModel.idealRange.upperBound
             )
         )
-        .foregroundStyle(
-            Color.theme.primaryGreen.opacity(0.22)
-        )
+        .foregroundStyle(idealRangeColor)
     }
 
     @ChartContentBuilder
     private var readingMarks: some ChartContent {
-        ForEach(viewModel.hourlyReadings) { reading in
+        ForEach(viewModel.tenMinuteReadings) { reading in
             LineMark(
                 x: .value("Time", reading.timestamp),
                 y: .value("Reading", reading.value)

@@ -79,39 +79,55 @@ struct ShipmentHistoryRowComponent: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Menu {
-                Button(action: {
+                Button {
                     selectedEditType = .start
                     showingEditTimeSheet = true
-                }) {
-                    Label("Edit Start Time", systemImage: "clock")
+                } label: {
+                    Label(
+                        "Adjust Start Date & Time",
+                        systemImage: "calendar.badge.clock"
+                    )
                 }
-                
-                Button(action: {
+
+                Button {
                     selectedEditType = .end
                     showingEditTimeSheet = true
-                }) {
-                    Label("Edit End Time", systemImage: "clock")
+                } label: {
+                    Label(
+                        "Adjust End Date & Time",
+                        systemImage: "calendar.badge.clock"
+                    )
                 }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.gray)
+                    .foregroundStyle(.secondary)
                     .frame(width: 44, height: 44)
             }
+            .accessibilityLabel("Shipment options")
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 24)
         .background(rowBackgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .sheet(isPresented: $showingEditTimeSheet) {
-             EditTimeSheetComponent(
+            EditTimeSheetComponent(
                 editType: selectedEditType,
-                initialDate: selectedEditType == .start ? rawStartDate : rawEndDate,
+                initialDate:
+                    selectedEditType == .start
+                    ? rawStartDate
+                    : rawEndDate,
+                counterpartDate:
+                    selectedEditType == .start
+                    ? rawEndDate
+                    : rawStartDate,
                 onSave: { newDate in
-                    onSaveTime(newDate, selectedEditType)
+                    onSaveTime(
+                        newDate,
+                        selectedEditType
+                    )
                 }
-             )
-             .presentationDetents([.medium, .large])
+            )
         }
     }
 }

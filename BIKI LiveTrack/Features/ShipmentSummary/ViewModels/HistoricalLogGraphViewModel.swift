@@ -49,11 +49,15 @@ extension HistoricalLogGraphViewModel {
         let averageText: String
         let idealRange: ClosedRange<Double>
 
-        let hourlyReadings: [HistoricalMetricReading]
+        // These are real database readings reduced to one point
+        // for every 10-minute interval.
+        let tenMinuteReadings: [HistoricalMetricReading]
+
         let chartStart: Date
         let chartEnd: Date
         let yDomain: ClosedRange<Double>
 
+        // The user can see four hours before scrolling horizontally.
         let visibleDuration: TimeInterval = 4 * 60 * 60
 
         init(
@@ -70,15 +74,16 @@ extension HistoricalLogGraphViewModel {
             self.averageText = averageText
             self.idealRange = idealRange
 
-            let hourlyReadings = Self.makeHourlyReadings(
+            let tenMinuteReadings = Self.makeTenMinuteReadings(
                 from: readings
             )
 
-            self.hourlyReadings = hourlyReadings
+            self.tenMinuteReadings = tenMinuteReadings
 
             let firstTimestamp =
-                hourlyReadings.first?.timestamp ?? fallbackDate
+                tenMinuteReadings.first?.timestamp ?? fallbackDate
 
+            // Begin the chart at the beginning of the first hour.
             let start =
                 Calendar.current.dateInterval(
                     of: .hour,
@@ -88,6 +93,7 @@ extension HistoricalLogGraphViewModel {
 
             self.chartStart = start
 
+            // Always provide at least four hours of chart space.
             let minimumEnd =
                 Calendar.current.date(
                     byAdding: .hour,
@@ -96,7 +102,7 @@ extension HistoricalLogGraphViewModel {
                 )
                 ?? start.addingTimeInterval(4 * 60 * 60)
 
-            if let lastTimestamp = hourlyReadings.last?.timestamp {
+            if let lastTimestamp = tenMinuteReadings.last?.timestamp {
                 let endOfLastHour =
                     Calendar.current.dateInterval(
                         of: .hour,
@@ -104,7 +110,10 @@ extension HistoricalLogGraphViewModel {
                     )?.end
                     ?? lastTimestamp
 
-                self.chartEnd = max(endOfLastHour, minimumEnd)
+                self.chartEnd = max(
+                    endOfLastHour,
+                    minimumEnd
+                )
             } else {
                 self.chartEnd = minimumEnd
             }
@@ -127,6 +136,8 @@ extension HistoricalLogGraphViewModel {
                 (minimum - padding)...(maximum + padding)
         }
 
+        // MARK: - Selected Point
+
         func selectedReading(
             nearestTo selectedTimestamp: Date?
         ) -> HistoricalMetricReading? {
@@ -134,7 +145,7 @@ extension HistoricalLogGraphViewModel {
                 return nil
             }
 
-            return hourlyReadings.min {
+            return tenMinuteReadings.min {
                 abs(
                     $0.timestamp.timeIntervalSince(
                         selectedTimestamp
@@ -164,6 +175,24 @@ extension HistoricalLogGraphViewModel {
             formatted(reading.value) + unit
         }
 
+        // Produces 24-hour clock labels:
+        // 01.00, 13.00, 21.00, etc.
+        func hourText(for date: Date) -> String {
+            let components = Calendar.current.dateComponents(
+                [.hour, .minute],
+                from: date
+            )
+
+            let hour = components.hour ?? 0
+            let minute = components.minute ?? 0
+
+            return String(
+                format: "%02d.%02d",
+                hour,
+                minute
+            )
+        }
+
         private func formatted(_ value: Double) -> String {
             if value.rounded() == value {
                 return String(Int(value))
@@ -172,12 +201,58 @@ extension HistoricalLogGraphViewModel {
             return String(format: "%.1f", value)
         }
 
-        private static func makeHourlyReadings(
+        // MARK: - Ten-Minute Graph Points
+
+        private static func makeTenMinuteReadings(
             from readings: [HistoricalMetricReading]
         ) -> [HistoricalMetricReading] {
-            readings.sorted {
+            let sortedReadings = readings.sorted {
                 $0.timestamp < $1.timestamp
             }
+
+            let readingsByInterval = Dictionary(
+                grouping: sortedReadings
+            ) { reading in
+                tenMinuteIntervalStart(
+                    for: reading.timestamp
+                )
+            }
+
+            return readingsByInterval.keys
+                .sorted()
+                .compactMap { intervalStart in
+                    // Uses the first real database reading inside
+                    // this 10-minute interval.
+                    readingsByInterval[intervalStart]?.first
+                }
+        }
+
+        private static func tenMinuteIntervalStart(
+            for date: Date
+        ) -> Date {
+            let calendar = Calendar.current
+
+            var components = calendar.dateComponents(
+                [
+                    .year,
+                    .month,
+                    .day,
+                    .hour,
+                    .minute
+                ],
+                from: date
+            )
+
+            let minute = components.minute ?? 0
+
+            // Examples:
+            // 13:03 becomes the 13:00 interval
+            // 13:17 becomes the 13:10 interval
+            // 13:58 becomes the 13:50 interval
+            components.minute = (minute / 10) * 10
+            components.second = 0
+
+            return calendar.date(from: components) ?? date
         }
     }
 }

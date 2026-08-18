@@ -22,6 +22,8 @@ struct ShipmentSummaryView: View {
     @State private var isShowingTripDetails = false
     @State private var exportURL: URL?
     @State private var isShowingShareSheet = false
+    @State private var isShowingStartDateAdjustment = false
+    @State private var isShowingEndDateAdjustment = false
     
     init(
         shipment: Shipment,
@@ -39,18 +41,18 @@ struct ShipmentSummaryView: View {
         VStack(alignment: .leading, spacing: 0) {
             // This header stays fixed and does not scroll.
             shipmentHeader
-                .padding(.horizontal, 32)
-                .padding(.top, 26)
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
                 .padding(.bottom, 24)
             
             // Only the content below the shipment information scrolls.
             ScrollView(.vertical, showsIndicators: true) {
-                VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: 24) {
                     // MARK: - Shipment Overview
                     
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Shipment Overview")
-                            .font(.app.heading1)
+                            .font(.system(size: 24, weight: .bold))
                             .foregroundColor(Color.theme.textPrimary)
                         
                         HStack(alignment: .top, spacing: 22) {
@@ -95,7 +97,7 @@ struct ShipmentSummaryView: View {
                                                         endCoordinate.longitude
                                                 )
                                             } else {
-                                                Text("In progress")
+                                                Text("Destination unavailable")
                                                     .font(.app.body)
                                                     .foregroundColor(
                                                         Color.theme.textSecondary
@@ -115,7 +117,7 @@ struct ShipmentSummaryView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text("Historical Log")
-                                .font(.app.heading1)
+                                .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(Color.theme.textPrimary)
                             
                             Spacer()
@@ -139,18 +141,41 @@ struct ShipmentSummaryView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
-                .padding(.horizontal, 32)
-                .padding(.bottom, 32)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.theme.tertiaryGreen)
+        .background(
+            Color.theme.tertiaryGreen
+                .ignoresSafeArea()
+        )
         .task {
             await viewModel.loadSummaryData()
         }
+
+        // Opens the map and read-only trip details.
         .sheet(isPresented: $isShowingTripDetails) {
             TripDetailsSheet(viewModel: viewModel)
         }
+
+        // Opens when "Adjust Start Date & Time" is selected.
+        .sheet(isPresented: $isShowingStartDateAdjustment) {
+            ShipmentDateTimeAdjustmentSheet(
+                viewModel: viewModel,
+                editType: .start
+            )
+        }
+
+        // Opens when "Adjust End Date & Time" is selected.
+        .sheet(isPresented: $isShowingEndDateAdjustment) {
+            ShipmentDateTimeAdjustmentSheet(
+                viewModel: viewModel,
+                editType: .end
+            )
+        }
+
+        // Opens the Apple sharing sheet for CSV or PNG.
         .sheet(isPresented: $isShowingShareSheet) {
             if let exportURL {
                 ActivitySheet(activityItems: [exportURL])
@@ -159,10 +184,10 @@ struct ShipmentSummaryView: View {
     }
     
     private var shipmentHeader: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top) {
                 Text(viewModel.shipmentIDText)
-                    .font(.system(size: 46, weight: .bold))
+                    .font(.system(size: 42, weight: .bold))
                     .foregroundColor(Color.theme.textPrimary)
                 
                 Spacer()
@@ -170,7 +195,7 @@ struct ShipmentSummaryView: View {
                 exportMenu
             }
             
-            HStack(alignment: .top, spacing: 56) {
+            HStack(alignment: .top, spacing: 8) {
                 HeaderDetail(
                     title: "Device Name",
                     value: viewModel.deviceNameText
@@ -202,7 +227,13 @@ struct ShipmentSummaryView: View {
     private var exportMenu: some View {
         ShipmentSummaryMenuComponent(
             onExportCSV: exportCSV,
-            onExportGraphPNG: exportGraphPNG
+            onExportGraphPNG: exportGraphPNG,
+            onAdjustStartDateTime: {
+                isShowingStartDateAdjustment = true
+            },
+            onAdjustEndDateTime: {
+                isShowingEndDateAdjustment = true
+            }
         )
     }
     
@@ -276,7 +307,7 @@ private struct HeaderDetail: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.app.body)
-                .foregroundColor(Color.theme.textSecondary)
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(.app.bodyBold)
                 .foregroundColor(Color.theme.textPrimary)

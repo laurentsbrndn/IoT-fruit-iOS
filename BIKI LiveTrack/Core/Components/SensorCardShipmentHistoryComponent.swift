@@ -30,7 +30,7 @@ struct SensorCardShipmentHistoryComponent: View {
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(averageValue)
-                            .font(.system(size: 45, weight: .bold))
+                            .font(.system(size: 48, weight: .bold))
                             .tracking(0.4)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
@@ -75,8 +75,8 @@ struct SensorCardShipmentHistoryComponent: View {
         .frame(width: 300, height: 209)
 //        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.1), radius: 4, y: 4)
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.08), radius: 4, y: 4)
     }
 }
 

@@ -15,8 +15,12 @@ final class ShipmentSummaryViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published var errorMessage: String?
     
-    let shipment: Shipment
+    @Published private(set) var shipment: Shipment
+    @Published private(set) var isUpdatingShipmentTime = false
+    @Published private(set) var shipmentTimeUpdateError: String?
+
     private let sensorLogRepository: SensorLogRepositoryProtocol
+    private let shipmentRepository: ShipmentRepositoryProtocol
 
     // MARK: - Konstanta Ideal (Dipindahkan dari GraphView)
     let temperatureTarget = 8.0
@@ -26,10 +30,12 @@ final class ShipmentSummaryViewModel: ObservableObject {
 
     init(
         shipment: Shipment,
-        sensorLogRepository: SensorLogRepositoryProtocol = SensorLogRepository()
+        sensorLogRepository: SensorLogRepositoryProtocol = SensorLogRepository(),
+        shipmentRepository: ShipmentRepositoryProtocol = ShipmentRepository()
     ) {
         self.shipment = shipment
         self.sensorLogRepository = sensorLogRepository
+        self.shipmentRepository = shipmentRepository
     }
     
     // MARK: - Shipment Header Presentation
@@ -123,10 +129,41 @@ final class ShipmentSummaryViewModel: ObservableObject {
         return humidityIdealRange.contains(value)
     }
 
+    private var sensorTimestamps: [Date] {
+        sensorLogs
+            .compactMap(\.timestamps)
+            .sorted()
+    }
+
+    var effectiveTripStartDate: Date {
+        shipment.startDate
+    }
+
+    var effectiveTripEndDate: Date? {
+        shipment.endDate
+            ?? sensorTimestamps.last
+    }
+
     var tripDuration: String {
-        guard let endDate = shipment.endDate else { return "In progress" }
-        let seconds = max(0, Int(endDate.timeIntervalSince(shipment.startDate)))
-        return String(format: "%02d:%02d:%02d", seconds / 3_600, (seconds % 3_600) / 60, seconds % 60)
+        guard let endDate = effectiveTripEndDate else {
+            return "—"
+        }
+
+        let seconds = max(
+            0,
+            Int(
+                endDate.timeIntervalSince(
+                    effectiveTripStartDate
+                )
+            )
+        )
+
+        return String(
+            format: "%02d:%02d:%02d",
+            seconds / 3_600,
+            (seconds % 3_600) / 60,
+            seconds % 60
+        )
     }
     
     // MARK: - Format Data untuk Tabel & Grafik
@@ -168,14 +205,76 @@ final class ShipmentSummaryViewModel: ObservableObject {
     }
 
     var routeCoordinates: [CLLocationCoordinate2D] {
-        let readings = locationLogs.compactMap { log -> CLLocationCoordinate2D? in
-            guard let latitude = log.averageLatitude, let longitude = log.averageLongitude else { return nil }
-            return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        guard let endCoordinate else {
+            return [startCoordinate]
         }
-        return [startCoordinate] + readings + (endCoordinate.map { [$0] } ?? [])
+
+        return [
+            startCoordinate,
+            endCoordinate
+        ]
     }
 
-    // MARK: - Helper Methods
+    func updateShipmentTime(
+        _ newDate: Date,
+        editType: TimeEditType
+    ) async -> Bool {
+        var updatedStartDate = shipment.startDate
+        var updatedEndDate = shipment.endDate
+
+        switch editType {
+        case .start:
+            updatedStartDate = newDate
+
+        case .end:
+            updatedEndDate = newDate
+        }
+
+        if let updatedEndDate,
+           updatedStartDate > updatedEndDate {
+            shipmentTimeUpdateError =
+                "The start date must be earlier than the end date."
+
+            return false
+        }
+
+        let dto = UpdateShipmentDTO(
+            deviceId: shipment.device.id.uuidString,
+            driverId: shipment.driver.id.uuidString,
+            truckPlateNumber: shipment.truckPlateNumber,
+            startDate: updatedStartDate,
+            endDate: updatedEndDate,
+            startLatitude: shipment.startLatitude,
+            startLongitude: shipment.startLongitude,
+            endLatitude: shipment.endLatitude,
+            endLongitude: shipment.endLongitude
+        )
+
+        isUpdatingShipmentTime = true
+        shipmentTimeUpdateError = nil
+
+        defer {
+            isUpdatingShipmentTime = false
+        }
+
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+
+            let payload = try encoder.encode(dto)
+
+            shipment = try await shipmentRepository.updateShipment(
+                id: shipment.id.uuidString,
+                payload: payload
+            )
+
+            return true
+        } catch {
+            shipmentTimeUpdateError = error.localizedDescription
+            return false
+        }
+    }
+    
     // MARK: - Export
     func prepareCSVExport() -> URL? {
         do {
