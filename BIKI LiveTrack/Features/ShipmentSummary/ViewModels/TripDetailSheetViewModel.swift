@@ -6,9 +6,8 @@ import CoreLocation
 final class TripDetailsSheetViewModel: ObservableObject {
     let shipment: Shipment
     let locationLogs: [SensorLog]
-
-    @Published var startDate: Date
-    @Published var endDate: Date
+    let startDate: Date
+    let endDate: Date
     @Published private(set) var startLocationName = "Loading location…"
     @Published private(set) var endLocationName = "Loading location…"
 
@@ -18,8 +17,20 @@ final class TripDetailsSheetViewModel: ObservableObject {
     ) {
         self.shipment = shipment
         self.locationLogs = locationLogs
-        self.startDate = shipment.startDate
-        self.endDate = shipment.endDate ?? shipment.startDate
+
+        let timestamps = locationLogs
+            .compactMap(\.timestamps)
+            .sorted()
+
+        let resolvedStartDate = shipment.startDate
+
+        let resolvedEndDate =
+            shipment.endDate
+            ?? timestamps.last
+            ?? resolvedStartDate
+
+        self.startDate = resolvedStartDate
+        self.endDate = resolvedEndDate
     }
 
     var startCoordinate: CLLocationCoordinate2D {
@@ -44,23 +55,14 @@ final class TripDetailsSheetViewModel: ObservableObject {
     }
 
     var routeCoordinates: [CLLocationCoordinate2D] {
-        let sensorCoordinates = locationLogs.compactMap { log -> CLLocationCoordinate2D? in
-            guard
-                let latitude = log.averageLatitude,
-                let longitude = log.averageLongitude
-            else {
-                return nil
-            }
-
-            return CLLocationCoordinate2D(
-                latitude: latitude,
-                longitude: longitude
-            )
+        guard let endCoordinate else {
+            return [startCoordinate]
         }
 
-        return [startCoordinate]
-            + sensorCoordinates
-            + (endCoordinate.map { [$0] } ?? [])
+        return [
+            startCoordinate,
+            endCoordinate
+        ]
     }
 
     var tripDuration: String {
@@ -72,18 +74,6 @@ final class TripDetailsSheetViewModel: ObservableObject {
             (seconds % 3_600) / 60,
             seconds % 60
         )
-    }
-
-    func updateStartDate(_ newDate: Date) {
-        startDate = newDate
-
-        if endDate < startDate {
-            endDate = startDate
-        }
-    }
-
-    func updateEndDate(_ newDate: Date) {
-        endDate = max(newDate, startDate)
     }
 
     func loadLocationNames() async {

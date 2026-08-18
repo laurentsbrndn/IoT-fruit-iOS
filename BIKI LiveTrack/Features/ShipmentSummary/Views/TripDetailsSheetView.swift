@@ -16,75 +16,75 @@ struct TripDetailsSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 10) {
-            header
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 18) {
+                header
 
-            ZStack(alignment: .top) {
-                RouteMapView(
-                    startCoordinate: viewModel.startCoordinate,
-                    endCoordinate: viewModel.endCoordinate,
-                    routeCoordinates: viewModel.routeCoordinates,
-                    startLocationName: viewModel.startLocationName,
-                    endLocationName: viewModel.endLocationName
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                ZStack(alignment: .top) {
+                    RouteMapView(
+                        startCoordinate: viewModel.startCoordinate,
+                        endCoordinate: viewModel.endCoordinate,
+                        routeCoordinates: viewModel.routeCoordinates,
+                        startLocationName: viewModel.startLocationName,
+                        endLocationName: viewModel.endLocationName,
+                        endPointTitle: "Destination"
+                    )
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 16,
+                            style: .continuous
+                        )
+                    )
 
-                durationCard
-                    .padding(.top, 18)
+                    durationCard
+                        .padding(.top, 18)
+                }
+                .frame(minHeight: 350)
+
+                HStack(alignment: .top, spacing: 18) {
+                    LocationSummaryCard(
+                        title: "Start Location",
+                        date: viewModel.startDate,
+                        locationName: viewModel.startLocationName
+                    )
+
+                    LocationSummaryCard(
+                        title: "End Location",
+                        date: viewModel.endDate,
+                        locationName: viewModel.endLocationName
+                    )
+                }
             }
-            .frame(minHeight: 350)
-
-            HStack(alignment: .top, spacing: 18) {
-                LocationSummaryCard(
-                    title: "Start Location",
-                    date: $viewModel.startDate,
-                    minimumDate: nil,
-                    locationName: viewModel.startLocationName
-                )
-
-                LocationSummaryCard(
-                    title: "End Location",
-                    date: $viewModel.endDate,
-                    minimumDate: viewModel.startDate,
-                    locationName: viewModel.endLocationName
-                )
-            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 20)
         }
-        .padding(.horizontal, 40)
-        .padding(.bottom, 24)
-        .presentationDetents([.large])
+        .presentationDetents([.fraction(0.85)])
         .presentationDragIndicator(.visible)
+        .presentationCornerRadius(24)
         .task {
             await viewModel.loadLocationNames()
-        }
-        .onChange(of: viewModel.startDate) { _, newDate in
-            viewModel.updateStartDate(newDate)
-        }
-        .onChange(of: viewModel.endDate) { _, newDate in
-            viewModel.updateEndDate(newDate)
         }
     }
 
     private var header: some View {
         HStack {
+            Spacer()
+
+            Text("Trip Details")
+                .font(.app.bodyBold)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .trailing) {
             Button("Close", systemImage: "xmark") {
                 dismiss()
             }
             .labelStyle(.iconOnly)
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.circle)
-
-            Spacer()
-
-            Text("Trip Details")
-                .font(.app.heading2)
-                .foregroundStyle(Color.theme.textPrimary)
-
-            Spacer()
-
-            Color.clear
-                .frame(width: 36, height: 36)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel("Close trip details")
         }
+        .padding(.top, 24)
     }
 
     private var durationCard: some View {
@@ -104,8 +104,7 @@ struct TripDetailsSheet: View {
 
 private struct LocationSummaryCard: View {
     let title: String
-    @Binding var date: Date
-    let minimumDate: Date?
+    let date: Date
     let locationName: String
 
     var body: some View {
@@ -114,15 +113,15 @@ private struct LocationSummaryCard: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(Color.theme.primaryGreen)
 
-            HStack(spacing: 16) {
+            HStack(alignment: .top, spacing: 16) {
                 Image(systemName: "clock.fill")
                     .font(.system(size: 20))
                     .foregroundStyle(Color.theme.primaryGreen)
 
-                EditableDateControl(
-                    date: $date,
-                    minimumDate: minimumDate
-                )
+                Text(date.toReadableString())
+                    .font(.app.body)
+                    .foregroundStyle(Color.theme.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             HStack(alignment: .top, spacing: 16) {
@@ -136,82 +135,34 @@ private struct LocationSummaryCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: 160,
+            alignment: .leading
+        )
         .padding(24)
         .background(Color.white.opacity(0.8))
-        .clipShape(RoundedRectangle(cornerRadius: 15))
-        .shadow(color: .black.opacity(0.1), radius: 4, y: 4)
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: 15,
+                style: .continuous
+            )
+        )
+        .shadow(
+            color: .black.opacity(0.1),
+            radius: 4,
+            y: 4
+        )
     }
 }
 
-private struct EditableDateControl: View {
-    @Binding var date: Date
-    let minimumDate: Date?
-
-    @State private var isShowingCalendar = false
-
-    var body: some View {
-        Button {
-            isShowingCalendar = true
-        } label: {
-            HStack(spacing: 10) {
-                Text(date.toReadableString())
-                    .font(.app.body)
-
-                Image(systemName: "chevron.down")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 11)
-            .padding(.vertical, 6)
-            .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .popover(isPresented: $isShowingCalendar, arrowEdge: .bottom) {
-            VStack(spacing: 12) {
-                DatePicker(
-                    "Date",
-                    selection: $date,
-                    in: availableDates,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .labelsHidden()
-
-                Divider()
-
-                HStack {
-                    Text("Time")
-
-                    Spacer()
-
-                    DatePicker(
-                        "Time",
-                        selection: $date,
-                        in: availableDates,
-                        displayedComponents: .hourAndMinute
-                    )
-                    .datePickerStyle(.compact)
-                    .labelsHidden()
-                    .tint(Color.theme.primaryGreen)
-                }
-            }
-            .padding(16)
-            .frame(width: 360)
-        }
-    }
-
-    private var availableDates: PartialRangeFrom<Date> {
-        minimumDate.map { $0... } ?? Date.distantPast...
-    }
-}
-
-private struct RouteMapView: UIViewRepresentable {
+struct RouteMapView: UIViewRepresentable {
     let startCoordinate: CLLocationCoordinate2D
     let endCoordinate: CLLocationCoordinate2D?
     let routeCoordinates: [CLLocationCoordinate2D]
     let startLocationName: String
     let endLocationName: String
+    let endPointTitle: String
 
     func makeUIView(context: Context) -> MKMapView {
         let map = MKMapView()
@@ -236,7 +187,7 @@ private struct RouteMapView: UIViewRepresentable {
             map.addAnnotation(
                 TripPointAnnotation(
                     coordinate: endCoordinate,
-                    title: "Destination",
+                    title: endPointTitle,
                     locationName: endLocationName
                 )
             )
@@ -349,8 +300,17 @@ private final class TripPointAnnotationView: MKAnnotationView {
             reuseIdentifier: reuseIdentifier
         )
 
-        frame = CGRect(x: 0, y: 0, width: 180, height: 92)
-        centerOffset = CGPoint(x: 0, y: -46)
+        frame = CGRect(
+            x: 0,
+            y: 0,
+            width: 180,
+            height: 92
+        )
+
+        // The final offset is calculated in layoutSubviews
+        // so the route coordinate sits at the SF Symbol's center.
+        centerOffset = .zero
+
         canShowCallout = false
 
         titleLabel.font = .systemFont(ofSize: 12, weight: .semibold)
@@ -385,7 +345,8 @@ private final class TripPointAnnotationView: MKAnnotationView {
         labelStack.addArrangedSubview(locationLabel)
 
         // Keeps a standard red/pink-like map pin while using an SF Symbol.
-        pinImageView.tintColor = .systemPink
+        pinImageView.tintColor =
+            UIColor(Color.theme.primaryGreen)
         pinImageView.contentMode = .scaleAspectFit
         pinImageView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -393,28 +354,88 @@ private final class TripPointAnnotationView: MKAnnotationView {
         addSubview(pinImageView)
 
         NSLayoutConstraint.activate([
-            labelStack.topAnchor.constraint(equalTo: topAnchor),
-            labelStack.centerXAnchor.constraint(equalTo: centerXAnchor),
-            labelStack.widthAnchor.constraint(equalToConstant: 160),
+            labelStack.topAnchor.constraint(
+                equalTo: topAnchor
+            ),
+
+            labelStack.centerXAnchor.constraint(
+                equalTo: centerXAnchor
+            ),
+
+            labelStack.widthAnchor.constraint(
+                equalToConstant: 160
+            ),
 
             pinImageView.topAnchor.constraint(
                 equalTo: labelStack.bottomAnchor,
                 constant: 2
             ),
+
             pinImageView.centerXAnchor.constraint(
                 equalTo: centerXAnchor
             ),
-            pinImageView.widthAnchor.constraint(equalToConstant: 26),
-            pinImageView.heightAnchor.constraint(equalToConstant: 26)
+
+            pinImageView.widthAnchor.constraint(
+                equalToConstant: 26
+            ),
+
+            pinImageView.heightAnchor.constraint(
+                equalToConstant: 26
+            )
         ])
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    // MARK: - Route Endpoint Alignment
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        // pinImageView.frame.midY is the visible symbol's
+        // vertical position inside the complete annotation.
+        //
+        // This offset places the map coordinate directly
+        // in the center of the SF Symbol. The route line
+        // therefore finishes behind and touches the symbol.
+        let symbolCenterOffset =
+            bounds.midY - pinImageView.frame.midY
+
+        let updatedOffset = CGPoint(
+            x: 0,
+            y: symbolCenterOffset
+        )
+
+        if centerOffset != updatedOffset {
+            centerOffset = updatedOffset
+        }
     }
 
-    func configure(title: String, locationName: String) {
+    required init?(coder: NSCoder) {
+        fatalError(
+            "init(coder:) has not been implemented"
+        )
+    }
+
+    func configure(
+        title: String,
+        locationName: String
+    ) {
         titleLabel.text = title
         locationLabel.text = locationName
+
+        let symbolName: String
+
+        if title == "Start Point" {
+            symbolName = "mappin.circle.fill"
+        } else {
+            symbolName = "truck.box.fill"
+        }
+
+        pinImageView.image = UIImage(
+            systemName: symbolName
+        )
+
+        pinImageView.tintColor =
+            UIColor(Color.theme.primaryGreen)
     }
 }
+

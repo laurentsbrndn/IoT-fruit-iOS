@@ -8,6 +8,8 @@ import CoreLocation
 
 struct LiveShipmentView: View {
     @StateObject private var viewModel: LiveShipmentViewModel
+    @State private var isShowingSensorGraphs = false
+    @State private var isShowingTripDetails = false
     
     init(
         shipment: Shipment,
@@ -62,45 +64,75 @@ struct LiveShipmentView: View {
             .padding(.horizontal, 24)
             
             HStack(alignment: .top, spacing: 22) {
-                SensorCardActiveShipmentComponent(
-                    title: "Temperature",
-                    value: viewModel.temperatureValueText,
-                    status: viewModel.temperatureStatus,
-                    progress: viewModel.temperatureProgress
-                )
-                
-                SensorCardActiveShipmentComponent(
-                    title: "Humidity",
-                    value: viewModel.humidityValueText,
-                    status: viewModel.humidityStatus,
-                    progress: viewModel.humidityProgress
-                )
-                
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    TripDurationCardComponent(
-                        duration: viewModel.tripDuration(asOf: context.date),
-                        origin: AnyView(
-                            LocationLabelComponent(
-                                latitude: viewModel.startCoordinate.latitude,
-                                longitude: viewModel.startCoordinate.longitude
-                            )
-                        ),
-                        destination: AnyView(
-                            Group {
-                                if let endCoord = viewModel.endCoordinate {
-                                    LocationLabelComponent(
-                                        latitude: endCoord.latitude,
-                                        longitude: endCoord.longitude
-                                    )
-                                } else {
-                                    Text("In progress")
-                                        .font(.app.body)
-                                        .foregroundColor(Color.theme.textSecondary)
-                                }
-                            }
-                        )
+                // Temperature card
+                Button {
+                    isShowingSensorGraphs = true
+                } label: {
+                    SensorCardActiveShipmentComponent(
+                        title: "Temperature",
+                        value: viewModel.temperatureValueText,
+                        status: viewModel.temperatureStatus,
+                        progress: viewModel.temperatureProgress
                     )
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(
+                    "Show live temperature and humidity graphs"
+                )
+
+                // Humidity card
+                Button {
+                    isShowingSensorGraphs = true
+                } label: {
+                    SensorCardActiveShipmentComponent(
+                        title: "Humidity",
+                        value: viewModel.humidityValueText,
+                        status: viewModel.humidityStatus,
+                        progress: viewModel.humidityProgress
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(
+                    "Show live temperature and humidity graphs"
+                )
+
+                // Trip-duration card
+                Button {
+                    isShowingTripDetails = true
+                } label: {
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        TripDurationCardComponent(
+                            duration: viewModel.tripDuration(
+                                asOf: context.date
+                            ),
+                            origin: AnyView(
+                                LocationLabelComponent(
+                                    latitude:
+                                        viewModel.startCoordinate.latitude,
+                                    longitude:
+                                        viewModel.startCoordinate.longitude
+                                )
+                            ),
+                            destination: AnyView(
+                                Group {
+                                    if let endCoord =
+                                        viewModel.endCoordinate {
+                                        LocationLabelComponent(
+                                            latitude: endCoord.latitude,
+                                            longitude: endCoord.longitude
+                                        )
+                                    } else {
+                                        Text("In progress")
+                                            .font(.app.body)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            )
+                        )
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show live trip details")
             }
             .padding(.horizontal, 24)
     
@@ -142,13 +174,26 @@ struct LiveShipmentView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .padding(.vertical, 16)
         
-        .background(Color.theme.tertiaryGreen.opacity(0.3).ignoresSafeArea())
+        .background(
+            Color.theme.tertiaryGreen
+                .ignoresSafeArea()
+        )
         .navigationBarTitleDisplayMode(.inline)
         .refreshable {
             await viewModel.loadLiveShipmentData()
         }
         .task {
             await viewModel.loadLiveShipmentData()
+        }
+        .sheet(isPresented: $isShowingSensorGraphs) {
+            LiveSensorGraphSheet(
+                viewModel: viewModel
+            )
+        }
+        .sheet(isPresented: $isShowingTripDetails) {
+            LiveTripDetailsSheet(
+                viewModel: viewModel
+            )
         }
     }
 }
