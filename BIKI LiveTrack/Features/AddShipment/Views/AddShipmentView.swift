@@ -5,28 +5,8 @@
 //  Created by Grace Frendy on 17/08/26.
 //
 
-//
-//  AddShipmentView.swift
-//  BIKI LiveTrack
-//
-//  Created by Grace Frendy on 17/08/26.
-//
-
-//
-//  AddShipmentView.swift
-//  BIKI LiveTrack
-//
-//  Created by Grace Frendy on 17/08/26.
-//
-
-//
-//  AddShipmentView.swift
-//  BIKI LiveTrack
-//
-//  Created by Grace Frendy on 17/08/26.
-//
-
 import SwiftUI
+import MapKit
 
 struct AddShipmentView: View {
     @Environment(\.dismiss) private var dismiss
@@ -38,11 +18,14 @@ struct AddShipmentView: View {
     private let knobSize: CGFloat = 44
     private let horizontalPadding: CGFloat = 4
     
+    // Melacak field mana yang sedang aktif
+    enum LocationField { case origin, destination }
+    @FocusState private var focusedField: LocationField?
+    
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 18) {
                 
-      // Header
                 HStack {
                     Spacer()
                     Text("Create a Shipment")
@@ -57,8 +40,6 @@ struct AddShipmentView: View {
                     .foregroundStyle(.secondary)
                 }
                 .padding(.top, 24)
-                
-     // Location Section
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Location \(Text("*").foregroundStyle(Color.theme.primaryRed))")
                         .font(.app.bodyBold)
@@ -80,22 +61,72 @@ struct AddShipmentView: View {
                         .padding(.vertical, 6)
                         
                         VStack(spacing: 8) {
-                            TextField("Current location", text: $viewModel.originLocation)
+                            HStack {
+                                TextField("Start location", text: $viewModel.originLocation)
+                                    .focused($focusedField, equals: .origin)
+                                    .onChange(of: viewModel.originLocation) { oldValue, newValue in
+                                        if focusedField == .origin {
+                                            viewModel.updateSearchQuery(for: newValue)
+                                        }
+                                    }
+                                    .padding(.horizontal, 12)
+                                
+                                Button {
+                                    viewModel.requestCurrentLocation()
+                                } label: {
+                                    Image(systemName: "location.fill")
+                                        .foregroundColor(Color.theme.primaryGreen)
+                                }
+                                .padding(.trailing, 12)
+                            }
+                            .frame(height: 36)
+                            .background(Color.theme.grey)
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            
+                            TextField("Where to go?", text: $viewModel.destinationLocation)
+                                .focused($focusedField, equals: .destination)
+                                .onChange(of: viewModel.destinationLocation) { oldValue, newValue in
+                                    if focusedField == .destination {
+                                        viewModel.updateSearchQuery(for: newValue)
+                                    }
+                                }
                                 .padding(.horizontal, 12)
                                 .frame(height: 36)
                                 .background(Color.theme.grey)
                                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                             
-                            TextField("Where to go?", text: $viewModel.destinationLocation)
-                                .padding(.horizontal, 12)
-                                .frame(height: 36)
-                                .background(Color.theme.grey)
+                            if !viewModel.locationSuggestions.isEmpty {
+                                ScrollView {
+                                    VStack(alignment: .leading) {
+                                        ForEach(viewModel.locationSuggestions, id: \.self) { suggestion in
+                                            Text(suggestion.title)
+                                                .font(.caption)
+                                                .padding(.vertical, 6)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .contentShape(Rectangle())
+                                                .onTapGesture {
+                                                    if focusedField == .origin {
+                                                        viewModel.originLocation = suggestion.title
+                                                    } else if focusedField == .destination {
+                                                        viewModel.destinationLocation = suggestion.title
+                                                    }
+                                                    viewModel.locationSuggestions = []
+                                                    focusedField = nil
+                                                }
+                                            Divider()
+                                        }
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.top, 4)
+                                }
+                                .frame(maxHeight: 120)
+                                .background(Color.theme.grey.opacity(0.8))
                                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            }
                         }
                     }
                 }
                 
-       // Truck Plate Number
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Truck Plate Number \(Text("*").foregroundStyle(Color.theme.primaryRed))")
                         .font(.app.bodyBold)
@@ -107,21 +138,26 @@ struct AddShipmentView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
                 
-    // Driver
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Driver \(Text("*").foregroundStyle(Color.theme.primaryRed))")
                         .font(.app.bodyBold)
                     
                     Menu {
-                        ForEach(viewModel.availableDrivers, id: \.self) { item in
-                            Button(item) {
-                                viewModel.selectedDriver = item
+                        if viewModel.isFetchingData {
+                            Text("Loading drivers...")
+                        } else if viewModel.availableDrivers.isEmpty {
+                            Text("No drivers found")
+                        } else {
+                            ForEach(viewModel.availableDrivers, id: \.id) { driver in
+                                Button(driver.name) {
+                                    viewModel.selectedDriver = driver
+                                }
                             }
                         }
                     } label: {
                         HStack {
-                            Text(viewModel.selectedDriver.isEmpty ? "Select a driver here" : viewModel.selectedDriver)
-                                .foregroundStyle(viewModel.selectedDriver.isEmpty ? .secondary : .primary)
+                            Text(viewModel.selectedDriver?.name ?? "Select a driver here")
+                                .foregroundStyle(viewModel.selectedDriver == nil ? .secondary : .primary)
                             Spacer()
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12, weight: .semibold))
@@ -136,21 +172,26 @@ struct AddShipmentView: View {
                     .buttonStyle(.plain)
                 }
                 
-    // Device ID
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Device ID \(Text("*").foregroundStyle(Color.theme.primaryRed))")
+                    Text("Device \(Text("*").foregroundStyle(Color.theme.primaryRed))")
                         .font(.app.bodyBold)
                     
                     Menu {
-                        ForEach(viewModel.availableDevices, id: \.self) { item in
-                            Button(item) {
-                                viewModel.selectedDeviceID = item
+                        if viewModel.isFetchingData {
+                            Text("Loading devices...")
+                        } else if viewModel.availableDevices.isEmpty {
+                            Text("No devices found")
+                        } else {
+                            ForEach(viewModel.availableDevices, id: \.id) { device in
+                                Button(device.name) {
+                                    viewModel.selectedDevice = device
+                                }
                             }
                         }
                     } label: {
                         HStack {
-                            Text(viewModel.selectedDeviceID.isEmpty ? "Select a device id here" : viewModel.selectedDeviceID)
-                                .foregroundStyle(viewModel.selectedDeviceID.isEmpty ? .secondary : .primary)
+                            Text(viewModel.selectedDevice?.name ?? "Select a device id here")
+                                .foregroundStyle(viewModel.selectedDevice == nil ? .secondary : .primary)
                             Spacer()
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12, weight: .semibold))
@@ -167,7 +208,6 @@ struct AddShipmentView: View {
                 
                 Spacer(minLength: 12)
                 
-                // Interactive Swipe To Confirm Slider
                 GeometryReader { geo in
                     let trackWidth = geo.size.width
                     let maxDrag = trackWidth - knobSize - (horizontalPadding * 2)
@@ -192,7 +232,6 @@ struct AddShipmentView: View {
                             .opacity(isConfirmed ? 1.0 : (1.0 - Double(dragOffset / (maxDrag > 0 ? maxDrag : 1))))
                             .animation(.easeInOut(duration: 0.2), value: isConfirmed)
                         
-                        // Draggable Slider Knob
                         Circle()
                             .fill(
                                 isConfirmed
@@ -252,6 +291,9 @@ struct AddShipmentView: View {
         .presentationDetents([.fraction(0.85)])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(24)
+        .task {
+            await viewModel.fetchInitialData()
+        }
     }
 }
 

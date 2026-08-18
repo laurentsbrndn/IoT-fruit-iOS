@@ -33,6 +33,8 @@ enum APIEndpoint {
     
     case getDevices
     case getDeviceByName(name: String)
+    
+    case getDrivers
     case getDriverName(id: String)
     
     var path: String {
@@ -51,7 +53,8 @@ enum APIEndpoint {
             
         case .getDevices: return "/api/devices"
         case .getDeviceByName(let name): return "/api/devices/name/\(name)"
-            
+        
+        case .getDrivers: return "/api/drivers"
         case .getDriverName(let id): return "/api/drivers/\(id)/name"
         }
     }
