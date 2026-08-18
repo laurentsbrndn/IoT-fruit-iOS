@@ -22,4 +22,9 @@ final class DriverRepository: DriverRepositoryProtocol {
         let endpoint = APIEndpoint.getDriverName(id: id)
         return try await apiClient.request(endpoint, responseType: Driver.self)
     }
+    
+    func fetchAllDrivers() async throws -> [Driver] {
+        let endpoint = APIEndpoint.getDrivers
+        return try await apiClient.request(endpoint, responseType: [Driver].self)
+    }
 }

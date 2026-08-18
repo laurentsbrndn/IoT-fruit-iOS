@@ -236,28 +236,28 @@ private struct HeaderLocationDetail: View {
     }
 }
 
-#Preview(traits: .landscapeLeft) {
-    NavigationStack {
-        LiveShipmentView(
-            shipment: Shipment(
-                id: UUID(),
-                device: Device(
-                    id: UUID(),
-                    name: "IoT_Device_4"
-                ),
-                driver: Driver(
-                    id: UUID(),
-                    name: "Bayu Sapta Aji",
-                    phoneNumber: "085649513284"
-                ),
-                truckPlateNumber: "B 8156 TFU",
-                startDate: Date().addingTimeInterval(-36 * 3600),
-                endDate: nil,
-                startLatitude: -6.9932,
-                startLongitude: 110.4203,
-                endLatitude: -6.1754,
-                endLongitude: 106.8272
-            )
-        )
-    }
-}
+//#Preview(traits: .landscapeLeft) {
+//    NavigationStack {
+//        LiveShipmentView(
+//            shipment: Shipment(
+//                id: UUID(),
+//                device: Device(
+//                    id: UUID(),
+//                    name: "IoT_Device_4"
+//                ),
+//                driver: Driver(
+//                    id: UUID(),
+//                    name: "Bayu Sapta Aji",
+//                    phoneNumber: "085649513284"
+//                ),
+//                truckPlateNumber: "B 8156 TFU",
+//                startDate: Date().addingTimeInterval(-36 * 3600),
+//                endDate: nil,
+//                startLatitude: -6.9932,
+//                startLongitude: 110.4203,
+//                endLatitude: -6.1754,
+//                endLongitude: 106.8272
+//            )
+//        )
+//    }
+//}
