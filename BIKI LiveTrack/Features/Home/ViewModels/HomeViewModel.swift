@@ -41,14 +41,26 @@ final class HomeViewModel: ObservableObject {
             let (active, all) = try await (fetchActive, fetchAll)
             
             self.activeShipments = active
+            
+            let now = Date()
+            let twentyFourHoursInSeconds: TimeInterval = 24 * 60 * 60
+            
             self.deliveredShipments = all
-                .filter { $0.endDate != nil }
+                .compactMap { shipment -> Shipment? in
+                    guard let endDate = shipment.endDate else { return nil }
+                    
+                    let timeSinceDelivered = now.timeIntervalSince(endDate)
+                    if timeSinceDelivered <= twentyFourHoursInSeconds {
+                        return shipment
+                    } else {
+                        return nil
+                    }
+                }
                 .sorted { ($0.endDate ?? Date.distantPast) > ($1.endDate ?? Date.distantPast) }
             
             let activeIDs = Set(active.map { $0.id })
             self.shipmentStatuses = self.shipmentStatuses.filter { activeIDs.contains($0.key) }
             
-            // 3. GANTI PEMANGGILAN FUNGSI
             await fetchShipmentStatuses(for: active)
             
         } catch {

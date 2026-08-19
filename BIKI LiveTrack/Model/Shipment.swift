@@ -89,15 +89,15 @@ struct UpdateShipmentDTO: Codable {
     let endLatitude: Double?
     let endLongitude: Double?
     
-    enum CodingKeys: String, CodingKey {
-        case deviceId = "device_id"
-        case driverId = "driver_id"
-        case truckPlateNumber = "shipment_truck_plate_number"
-        case startDate = "shipment_start_date"
-        case endDate = "shipment_end_date"
-        case startLatitude = "shipment_start_latitude"
-        case startLongitude = "shipment_start_longitude"
-        case endLatitude = "shipment_end_latitude"
-        case endLongitude = "shipment_end_longitude"
-    }
+//    enum CodingKeys: String, CodingKey {
+//        case deviceId = "device_id"
+//        case driverId = "driver_id"
+//        case truckPlateNumber = "shipment_truck_plate_number"
+//        case startDate = "shipment_start_date"
+//        case endDate = "shipment_end_date"
+//        case startLatitude = "shipment_start_latitude"
+//        case startLongitude = "shipment_start_longitude"
+//        case endLatitude = "shipment_end_latitude"
+//        case endLongitude = "shipment_end_longitude"
+//    }
 }

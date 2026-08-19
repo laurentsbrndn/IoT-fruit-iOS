@@ -25,27 +25,27 @@ final class LiveShipmentViewModel: ObservableObject {
     @Published var currentHumidity: Double?
     @Published var lastUpdatedTimestamp: Date?
     
-    // Apple Maps location names displayed in LiveTripDetailsSheet.
-    @Published private(set) var startLocationName =
-        "Loading location…"
-
-    @Published private(set) var currentLocationName =
-        "Loading location…"
+    @Published private(set) var startLocationName = "Loading location…"
+    @Published private(set) var currentLocationName = "Loading location…"
     
-    let shipment: Shipment
+    @Published var shipment: Shipment
+    
     private let sensorLogRepository: SensorLogRepositoryProtocol
     private let alertLogRepository: AlertLogRepositoryProtocol
+    private let shipmentRepository: ShipmentRepositoryProtocol
     
     private var cancellables = Set<AnyCancellable>()
     
     init(
         shipment: Shipment,
         sensorLogRepository: SensorLogRepositoryProtocol = SensorLogRepository(),
-        alertLogRepository: AlertLogRepositoryProtocol = AlertLogRepository()
+        alertLogRepository: AlertLogRepositoryProtocol = AlertLogRepository(),
+        shipmentRepository: ShipmentRepositoryProtocol = ShipmentRepository()
     ) {
         self.shipment = shipment
         self.sensorLogRepository = sensorLogRepository
         self.alertLogRepository = alertLogRepository
+        self.shipmentRepository = shipmentRepository
         
         setupWebSocketListener()
     }
@@ -57,8 +57,11 @@ final class LiveShipmentViewModel: ObservableObject {
         do {
             async let fetchSensors = sensorLogRepository.fetchSensors(byShipmentID: shipment.id.uuidString)
             async let fetchAlerts = alertLogRepository.fetchAlerts(byShipmentID: shipment.id.uuidString)
+            async let fetchShipment = shipmentRepository.fetchShipmentDetail(id: shipment.id.uuidString)
             
-            let (logs, alertLogs) = try await (fetchSensors, fetchAlerts)
+            let (logs, alertLogs, updatedShipment) = try await (fetchSensors, fetchAlerts, fetchShipment)
+            
+            self.shipment = updatedShipment
             
             self.sensorLogs = logs.sorted {
                 ($0.timestamps ?? .distantPast) < ($1.timestamps ?? .distantPast)
@@ -72,8 +75,7 @@ final class LiveShipmentViewModel: ObservableObject {
                 self.currentHumidity = latest.humidity
                 self.lastUpdatedTimestamp = latest.timestamps
             }
-
-            // Converts the latest database coordinates into Apple Maps names.
+            
             await loadLiveLocationNames()
             
         } catch {
@@ -173,18 +175,29 @@ final class LiveShipmentViewModel: ObservableObject {
     }
     
     func tripDuration(asOf now: Date = Date()) -> String {
-        // Ambil timestamp dari sensor log pertama sebagai alternatif start time jika shipment.startDate bermasalah di DB
         let effectiveStartDate = sensorLogs.first?.timestamps ?? shipment.startDate
-        
         let endDate = shipment.endDate ?? now
-        
         let timeInterval = endDate.timeIntervalSince(effectiveStartDate)
         
         let seconds = timeInterval < 0 ? Int(now.timeIntervalSince(effectiveStartDate.addingTimeInterval(abs(timeInterval)))) : Int(timeInterval)
-        
         let finalSeconds = max(0, seconds)
         
-        return String(format: "%02d:%02d:%02d", finalSeconds / 3_600, (finalSeconds % 3_600) / 60, finalSeconds % 60)
+        let days = finalSeconds / 86_400
+        let remainingSeconds = finalSeconds % 86_400
+        
+        let hours = remainingSeconds / 3_600
+        let minutes = (remainingSeconds % 3_600) / 60
+        let secs = remainingSeconds % 60
+        
+        let timeString = String(format: "%02d:%02d:%02d", hours, minutes, secs)
+        
+        if days == 0 {
+            return timeString
+        } else if days == 1 {
+            return "1 day, \(timeString)"
+        } else {
+            return "\(days) days, \(timeString)"
+        }
     }
     
     func formatTimeAgo(from date: Date) -> String {
@@ -202,22 +215,22 @@ final class LiveShipmentViewModel: ObservableObject {
     }
     
     // MARK: - Live Graph Data
-
+    
     let temperatureIdealRange: ClosedRange<Double> = 10...13
     let humidityIdealRange: ClosedRange<Double> = 85...90
-
+    
     var temperatureChartReadings: [LiveChartReading] {
         makeTenMinuteReadings { log in
             log.temperature
         }
     }
-
+    
     var humidityChartReadings: [LiveChartReading] {
         makeTenMinuteReadings { log in
             log.humidity
         }
     }
-
+    
     private func makeTenMinuteReadings(
         value: (SensorLog) -> Double?
     ) -> [LiveChartReading] {
@@ -228,23 +241,23 @@ final class LiveShipmentViewModel: ObservableObject {
             else {
                 return nil
             }
-
+            
             return LiveChartReading(
                 id: log.id,
                 timestamp: timestamp,
                 value: sensorValue
             )
         }
-        .sorted {
-            $0.timestamp < $1.timestamp
-        }
-
+            .sorted {
+                $0.timestamp < $1.timestamp
+            }
+        
         let groupedReadings = Dictionary(
             grouping: validReadings
         ) { reading in
             tenMinuteIntervalStart(for: reading.timestamp)
         }
-
+        
         return groupedReadings.keys
             .sorted()
             .compactMap { interval in
@@ -252,29 +265,23 @@ final class LiveShipmentViewModel: ObservableObject {
                 groupedReadings[interval]?.last
             }
     }
-
+    
     private func tenMinuteIntervalStart(for date: Date) -> Date {
         let calendar = Calendar.current
-
+        
         var components = calendar.dateComponents(
             [.year, .month, .day, .hour, .minute],
             from: date
         )
-
+        
         let minute = components.minute ?? 0
-
+        
         components.minute = (minute / 10) * 10
         components.second = 0
-
+        
         return calendar.date(from: components) ?? date
     }
-
-    // MARK: - Live Route Data
-
-    /// The latest valid location received from the database.
-    ///
-    /// We read from the end because sensorLogs is sorted from oldest
-    /// to newest inside loadLiveShipmentData().
+    
     private var latestSensorCoordinate: CLLocationCoordinate2D? {
         for log in sensorLogs.reversed() {
             guard
@@ -283,81 +290,70 @@ final class LiveShipmentViewModel: ObservableObject {
             else {
                 continue
             }
-
+            
             let coordinate = CLLocationCoordinate2D(
                 latitude: latitude,
                 longitude: longitude
             )
-
+            
             // Ignore impossible or empty coordinates.
             guard CLLocationCoordinate2DIsValid(coordinate) else {
                 continue
             }
-
+            
             guard latitude != 0 || longitude != 0 else {
                 continue
             }
-
+            
             return coordinate
         }
-
+        
         return nil
     }
-
-    /// The live destination is the newest valid sensor coordinate.
+    
     var currentRouteCoordinate: CLLocationCoordinate2D {
         latestSensorCoordinate ?? startCoordinate
     }
-
-    /// Only two points are supplied to MapKit:
-    ///
-    /// 1. Shipment start
-    /// 2. Current live location
-    ///
-    /// Therefore, MapKit draws one straight line instead of joining
-    /// all database coordinates and creating unwanted extra lines.
+    
     var liveRouteCoordinates: [CLLocationCoordinate2D] {
         let currentCoordinate = currentRouteCoordinate
-
+        
         if coordinatesAreEqual(
             startCoordinate,
             currentCoordinate
         ) {
             return [startCoordinate]
         }
-
+        
         return [
             startCoordinate,
             currentCoordinate
         ]
     }
-
+    
     private func coordinatesAreEqual(
         _ first: CLLocationCoordinate2D,
         _ second: CLLocationCoordinate2D
     ) -> Bool {
         let tolerance = 0.000001
-
+        
         return
-            abs(first.latitude - second.latitude) < tolerance
-            &&
-            abs(first.longitude - second.longitude) < tolerance
+        abs(first.latitude - second.latitude) < tolerance
+        &&
+        abs(first.longitude - second.longitude) < tolerance
     }
-
-    // MARK: - Apple Maps Location Names
-
-    /// Resolves the latitude and longitude into Apple Maps location names.
+    
     func loadLiveLocationNames() async {
         let resolvedStartName =
-            await locationName(for: startCoordinate)
-
+        await locationName(for: startCoordinate)
+        
         let resolvedCurrentName =
-            await locationName(for: currentRouteCoordinate)
-
+        await locationName(for: currentRouteCoordinate)
+        
         startLocationName = resolvedStartName
         currentLocationName = resolvedCurrentName
     }
-
+    
     private func locationName(
         for coordinate: CLLocationCoordinate2D
     ) async -> String {
@@ -365,36 +361,34 @@ final class LiveShipmentViewModel: ObservableObject {
             latitude: coordinate.latitude,
             longitude: coordinate.longitude
         )
-
+        
         do {
             let placemarks =
-                try await CLGeocoder()
-                    .reverseGeocodeLocation(location)
-
+            try await CLGeocoder()
+                .reverseGeocodeLocation(location)
+            
             guard let placemark = placemarks.first else {
                 return coordinateText(coordinate)
             }
-
+            
             let addressParts = [
                 placemark.name,
                 placemark.locality
-                    ?? placemark.subAdministrativeArea
+                ?? placemark.subAdministrativeArea
             ]
-            .compactMap { $0 }
-            .filter { !$0.isEmpty }
-
+                .compactMap { $0 }
+                .filter { !$0.isEmpty }
+            
             if addressParts.isEmpty {
                 return coordinateText(coordinate)
             }
-
+            
             return addressParts.joined(separator: ", ")
         } catch {
-            // Coordinates remain as a safe fallback when
-            // Apple Maps cannot find an address.
             return coordinateText(coordinate)
         }
     }
-
+    
     private func coordinateText(
         _ coordinate: CLLocationCoordinate2D
     ) -> String {
@@ -404,4 +398,4 @@ final class LiveShipmentViewModel: ObservableObject {
             coordinate.longitude
         )
     }
-    }
+}
