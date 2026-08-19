@@ -14,13 +14,15 @@ struct LiveShipmentView: View {
     init(
         shipment: Shipment,
         sensorLogRepository: SensorLogRepositoryProtocol = SensorLogRepository(),
-        alertLogRepository: AlertLogRepositoryProtocol = AlertLogRepository()
+        alertLogRepository: AlertLogRepositoryProtocol = AlertLogRepository(),
+        shipmentRepository: ShipmentRepositoryProtocol = ShipmentRepository()
     ) {
         _viewModel = StateObject(
             wrappedValue: LiveShipmentViewModel(
                 shipment: shipment,
                 sensorLogRepository: sensorLogRepository,
-                alertLogRepository: alertLogRepository
+                alertLogRepository: alertLogRepository,
+                shipmentRepository: shipmentRepository
             )
         )
     }
@@ -79,7 +81,7 @@ struct LiveShipmentView: View {
                 .accessibilityLabel(
                     "Show live temperature and humidity graphs"
                 )
-
+                
                 // Humidity card
                 Button {
                     isShowingSensorGraphs = true
@@ -95,7 +97,7 @@ struct LiveShipmentView: View {
                 .accessibilityLabel(
                     "Show live temperature and humidity graphs"
                 )
-
+                
                 // Trip-duration card
                 Button {
                     isShowingTripDetails = true
@@ -135,7 +137,7 @@ struct LiveShipmentView: View {
                 .accessibilityLabel("Show live trip details")
             }
             .padding(.horizontal, 24)
-    
+            
             VStack(alignment: .leading, spacing: 16) {
                 Text("Alerts (\(viewModel.alerts.count))")
                     .font(.system(size: 24, weight: .bold))

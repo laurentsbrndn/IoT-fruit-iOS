@@ -15,7 +15,7 @@ struct TripDurationCardComponent: View {
     var body: some View {
         VStack(spacing: 10) {
             ZStack {
-                Text("Trip Duration")
+                Text("Trip Duration and Location")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(Color.theme.textSecondary)
                 
@@ -30,6 +30,8 @@ struct TripDurationCardComponent: View {
             Text(duration)
                 .font(.system(size: 56, weight: .regular))
                 .monospacedDigit()
+                .minimumScaleFactor(0.5) 
+                .lineLimit(1)
                 .foregroundColor(Color.theme.textPrimary)
                 .padding(.vertical, 4)
             
@@ -59,7 +61,6 @@ struct TripDurationCardComponent: View {
         }
         .padding(24)
         .frame(height: 209)
-//        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
         .cornerRadius(20)
         .shadow(
