@@ -15,7 +15,6 @@ struct HomeView: View {
     private let autoRefreshInterval: UInt64 = 60
     
     var body: some View {
-        let dynamicLiveColumnWidth = max(320, (windowWidth - 80) / 3)
         let dynamicHistoryCardWidth = max(360, windowWidth * 0.38)
         
         VStack(alignment: .leading, spacing: 32) {
@@ -73,36 +72,52 @@ struct HomeView: View {
                         .foregroundColor(Color.theme.textSecondary)
                         .padding(.horizontal, 24)
                 } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    GeometryReader { geometry in
+                        let horizontalPadding: CGFloat = 48
+                        let spacesBetweenColumns: CGFloat = 32
+
+                        let usableWidth =
+                            geometry.size.width
+                            - horizontalPadding
+                            - spacesBetweenColumns
+
+                        let columnWidth = max(
+                            0,
+                            usableWidth / 3
+                        )
+
                         HStack(alignment: .top, spacing: 16) {
-                            
                             liveColumnView(
                                 title: "All systems in ideal conditions",
                                 dotColor: Color.theme.primaryGreen,
                                 count: idealShipments.count,
                                 shipments: idealShipments,
-                                columnWidth: dynamicLiveColumnWidth
+                                columnWidth: columnWidth
                             )
-                            
+
                             liveColumnView(
                                 title: "Need attentions",
                                 dotColor: Color.theme.primaryYellow,
                                 count: warningShipments.count,
                                 shipments: warningShipments,
-                                columnWidth: dynamicLiveColumnWidth
+                                columnWidth: columnWidth
                             )
-                            
+
                             liveColumnView(
                                 title: "Devices are not connected",
                                 dotColor: Color.theme.primaryRed,
                                 count: offlineShipments.count,
                                 shipments: offlineShipments,
                                 isCountHighlighted: true,
-                                columnWidth: dynamicLiveColumnWidth
+                                columnWidth: columnWidth
                             )
                         }
                         .padding(.horizontal, 24)
-                        .frame(maxHeight: .infinity)
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity,
+                            alignment: .top
+                        )
                     }
                 }
             }
