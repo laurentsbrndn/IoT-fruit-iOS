@@ -54,15 +54,29 @@ final class TripDetailsSheetViewModel: ObservableObject {
         )
     }
 
+    // MARK: - PERUBAHAN LOGIKA ROUTE (GARIS HIJAU)
     var routeCoordinates: [CLLocationCoordinate2D] {
-        guard let endCoordinate else {
-            return [startCoordinate]
+        // 1. Mulai dari titik keberangkatan
+        var coords = [startCoordinate]
+        
+        // 2. Tambahkan seluruh jejak dari tabel sensor_logs yang riil
+        let validLogs = locationLogs.compactMap { log -> CLLocationCoordinate2D? in
+            guard let lat = log.averageLatitude, let lon = log.averageLongitude else { return nil }
+            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            
+            // Pastikan titik koordinat valid dan bukan 0,0
+            guard CLLocationCoordinate2DIsValid(coord), (lat != 0 || lon != 0) else { return nil }
+            return coord
+        }
+        
+        coords.append(contentsOf: validLogs)
+        
+        // 3. Akhiri tepat di titik destinasi (jika sudah ada)
+        if let endCoordinate = endCoordinate {
+            coords.append(endCoordinate)
         }
 
-        return [
-            startCoordinate,
-            endCoordinate
-        ]
+        return coords
     }
 
     var tripDuration: String {

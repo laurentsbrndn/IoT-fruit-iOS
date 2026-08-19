@@ -1,7 +1,7 @@
 import SwiftUI
 import MapKit
 
-struct TripDetailsSheet: View {
+struct TripDetailsSheetView: View {
     @StateObject private var viewModel: TripDetailsSheetViewModel
     @Environment(\.dismiss) private var dismiss
 
