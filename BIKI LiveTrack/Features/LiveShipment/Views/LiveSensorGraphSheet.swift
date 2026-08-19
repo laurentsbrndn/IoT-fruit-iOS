@@ -36,10 +36,7 @@ struct LiveSensorGraphSheet: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 20)
         }
-        .background(
-            Color.theme.tertiaryGreen
-                .ignoresSafeArea()
-        )
+
         .presentationDetents([.fraction(0.85)])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(24)
@@ -77,10 +74,26 @@ private struct LiveSensorChart: View {
     @State private var selectedTimestamp: Date?
 
     private let idealRangeColor =
-        Color.theme.primaryGreen.opacity(0.22)
+        Color.theme.secondaryGreen
+
+    private let idealColor =
+        Color.theme.primaryGreen
+
+    private let warningColor =
+        Color.theme.primaryYellow
 
     private let visibleDuration: TimeInterval =
         4 * 60 * 60
+
+    private var currentValueColor: Color {
+        guard let latestReading = readings.last else {
+            return .secondary
+        }
+
+        return idealRange.contains(latestReading.value)
+            ? idealColor
+            : warningColor
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -128,7 +141,7 @@ private struct LiveSensorChart: View {
                         weight: .semibold
                     )
                 )
-                .foregroundStyle(.primary)
+                .foregroundStyle(currentValueColor)
         }
     }
 
@@ -226,16 +239,17 @@ private struct LiveSensorChart: View {
 
     @ChartContentBuilder
     private var readingMarks: some ChartContent {
-        ForEach(readings) { reading in
+        liveLineMarks
+        livePointMarks
+    }
+
+    @ChartContentBuilder
+    private var liveLineMarks: some ChartContent {
+        ForEach(lineSegments) { segment in
             LineMark(
-                x: .value(
-                    "Time",
-                    reading.timestamp
-                ),
-                y: .value(
-                    "Reading",
-                    reading.value
-                )
+                x: .value("Time", segment.start.timestamp),
+                y: .value("Reading", segment.start.value),
+                series: .value("Segment", segment.id)
             )
             .interpolationMethod(.linear)
             .lineStyle(
@@ -245,27 +259,80 @@ private struct LiveSensorChart: View {
                     lineJoin: .round
                 )
             )
-            .foregroundStyle(
-                Color.theme.primaryGreen
-            )
+            .foregroundStyle(lineColor(for: segment))
 
-            PointMark(
-                x: .value(
-                    "Time",
-                    reading.timestamp
-                ),
-                y: .value(
-                    "Reading",
-                    reading.value
+            LineMark(
+                x: .value("Time", segment.end.timestamp),
+                y: .value("Reading", segment.end.value),
+                series: .value("Segment", segment.id)
+            )
+            .interpolationMethod(.linear)
+            .lineStyle(
+                StrokeStyle(
+                    lineWidth: 2.5,
+                    lineCap: .round,
+                    lineJoin: .round
                 )
             )
+            .foregroundStyle(lineColor(for: segment))
+        }
+    }
+
+    @ChartContentBuilder
+    private var livePointMarks: some ChartContent {
+        ForEach(readings) { reading in
+            PointMark(
+                x: .value("Time", reading.timestamp),
+                y: .value("Reading", reading.value)
+            )
             .symbolSize(24)
-            .foregroundStyle(
-                Color.theme.primaryGreen
+            .foregroundStyle(pointColor(for: reading))
+        }
+    }
+
+    private struct LiveLineSegment: Identifiable {
+        let id: String
+        let start: LiveChartReading
+        let end: LiveChartReading
+        let isIdeal: Bool
+    }
+
+    private var lineSegments: [LiveLineSegment] {
+        zip(readings, readings.dropFirst()).map {
+            startReading,
+            endReading in
+
+            let startIsIdeal =
+                idealRange.contains(startReading.value)
+
+            let endIsIdeal =
+                idealRange.contains(endReading.value)
+
+            return LiveLineSegment(
+                id:
+                    "\(startReading.id.uuidString)-\(endReading.id.uuidString)",
+                start: startReading,
+                end: endReading,
+                isIdeal: startIsIdeal && endIsIdeal
             )
         }
     }
 
+    private func lineColor(
+        for segment: LiveLineSegment
+    ) -> Color {
+        segment.isIdeal
+            ? idealColor
+            : warningColor
+    }
+
+    private func pointColor(
+        for reading: LiveChartReading
+    ) -> Color {
+        idealRange.contains(reading.value)
+            ? idealColor
+            : warningColor
+    }
     // MARK: - Selected Point
 
     @ChartContentBuilder

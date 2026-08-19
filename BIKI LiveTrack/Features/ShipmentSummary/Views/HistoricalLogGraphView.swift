@@ -34,7 +34,33 @@ private struct HistoricalMetricChart: View {
     @State private var selectedTimestamp: Date?
     
     private let idealRangeColor =
-        Color.theme.primaryGreen.opacity(0.22)
+        Color.theme.secondaryGreen
+    
+    private let warningColor =
+        Color.theme.primaryYellow
+    
+    private var averageColor: Color {
+        viewModel.averageIsIdeal
+            ? tint
+            : warningColor
+    }
+
+    private func pointColor(
+        for reading: HistoricalMetricReading
+    ) -> Color {
+        viewModel.isIdeal(reading)
+            ? tint
+            : warningColor
+    }
+
+    private func lineColor(
+        for segment:
+            HistoricalLogGraphViewModel.LineSegment
+    ) -> Color {
+        segment.isIdeal
+            ? tint
+            : warningColor
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -71,8 +97,13 @@ private struct HistoricalMetricChart: View {
             }
 
             Text(viewModel.averageText)
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(.primary)
+                .font(
+                    .system(
+                        size: 28,
+                        weight: .semibold
+                    )
+                )
+                .foregroundStyle(averageColor)
         }
     }
 
@@ -155,10 +186,17 @@ private struct HistoricalMetricChart: View {
 
     @ChartContentBuilder
     private var readingMarks: some ChartContent {
-        ForEach(viewModel.tenMinuteReadings) { reading in
+        lineSegmentMarks
+        readingPointMarks
+    }
+
+    @ChartContentBuilder
+    private var lineSegmentMarks: some ChartContent {
+        ForEach(viewModel.lineSegments) { segment in
             LineMark(
-                x: .value("Time", reading.timestamp),
-                y: .value("Reading", reading.value)
+                x: .value("Time", segment.start.timestamp),
+                y: .value("Reading", segment.start.value),
+                series: .value("Segment", segment.id)
             )
             .interpolationMethod(.linear)
             .lineStyle(
@@ -168,14 +206,34 @@ private struct HistoricalMetricChart: View {
                     lineJoin: .round
                 )
             )
-            .foregroundStyle(tint)
+            .foregroundStyle(lineColor(for: segment))
 
+            LineMark(
+                x: .value("Time", segment.end.timestamp),
+                y: .value("Reading", segment.end.value),
+                series: .value("Segment", segment.id)
+            )
+            .interpolationMethod(.linear)
+            .lineStyle(
+                StrokeStyle(
+                    lineWidth: 2.5,
+                    lineCap: .round,
+                    lineJoin: .round
+                )
+            )
+            .foregroundStyle(lineColor(for: segment))
+        }
+    }
+
+    @ChartContentBuilder
+    private var readingPointMarks: some ChartContent {
+        ForEach(viewModel.tenMinuteReadings) { reading in
             PointMark(
                 x: .value("Time", reading.timestamp),
                 y: .value("Reading", reading.value)
             )
             .symbolSize(24)
-            .foregroundStyle(tint)
+            .foregroundStyle(pointColor(for: reading))
         }
     }
 

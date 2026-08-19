@@ -20,6 +20,7 @@ struct HistoricalLogGraphViewModel {
             averageText: summaryViewModel.temperatureText(
                 summaryViewModel.averageTemperature
             ),
+            averageValue: summaryViewModel.averageTemperature,
             targetValue: summaryViewModel.temperatureTarget,
             idealRange: summaryViewModel.temperatureIdealRange,
             readings: summaryViewModel.temperatureReadings,
@@ -32,6 +33,7 @@ struct HistoricalLogGraphViewModel {
             averageText: summaryViewModel.humidityText(
                 summaryViewModel.averageHumidity
             ),
+            averageValue: summaryViewModel.averageHumidity,
             targetValue: summaryViewModel.humidityTarget,
             idealRange: summaryViewModel.humidityIdealRange,
             readings: summaryViewModel.humidityReadings,
@@ -43,11 +45,26 @@ struct HistoricalLogGraphViewModel {
 // MARK: - One Graph
 
 extension HistoricalLogGraphViewModel {
+    struct LineSegment: Identifiable {
+        let id: String
+        let start: HistoricalMetricReading
+        let end: HistoricalMetricReading
+        let isIdeal: Bool
+    }
+
+    
     struct Metric {
         let title: String
         let unit: String
         let averageText: String
         let idealRange: ClosedRange<Double>
+
+        /// True when the average value is inside the ideal range.
+        let averageIsIdeal: Bool
+
+        /// Separate line segments allow Swift Charts to give
+        /// each section of the line a different color.
+        let lineSegments: [LineSegment]
 
         // These are real database readings reduced to one point
         // for every 10-minute interval.
@@ -64,6 +81,7 @@ extension HistoricalLogGraphViewModel {
             title: String,
             unit: String,
             averageText: String,
+            averageValue: Double?,
             targetValue: Double,
             idealRange: ClosedRange<Double>,
             readings: [HistoricalMetricReading],
@@ -74,11 +92,40 @@ extension HistoricalLogGraphViewModel {
             self.averageText = averageText
             self.idealRange = idealRange
 
+            self.averageIsIdeal =
+                averageValue.map {
+                    idealRange.contains($0)
+                }
+                ?? false
+
             let tenMinuteReadings = Self.makeTenMinuteReadings(
                 from: readings
             )
 
             self.tenMinuteReadings = tenMinuteReadings
+            
+            self.lineSegments = zip(
+                tenMinuteReadings,
+                tenMinuteReadings.dropFirst()
+            )
+            .map { startReading, endReading in
+                let startIsIdeal =
+                    idealRange.contains(startReading.value)
+
+                let endIsIdeal =
+                    idealRange.contains(endReading.value)
+
+                return LineSegment(
+                    id:
+                        "\(startReading.id.uuidString)-\(endReading.id.uuidString)",
+                    start: startReading,
+                    end: endReading,
+
+                    // A complete segment is green only when both
+                    // of its points are inside the ideal range.
+                    isIdeal: startIsIdeal && endIsIdeal
+                )
+            }
 
             let firstTimestamp =
                 tenMinuteReadings.first?.timestamp ?? fallbackDate
@@ -135,7 +182,15 @@ extension HistoricalLogGraphViewModel {
             self.yDomain =
                 (minimum - padding)...(maximum + padding)
         }
+        
+        // MARK: - Ideal Status
 
+        func isIdeal(
+            _ reading: HistoricalMetricReading
+        ) -> Bool {
+            idealRange.contains(reading.value)
+        }
+        
         // MARK: - Selected Point
 
         func selectedReading(

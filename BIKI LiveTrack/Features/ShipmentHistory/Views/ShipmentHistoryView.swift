@@ -9,9 +9,7 @@ import SwiftUI
 
 struct ShipmentHistoryView: View {
     @StateObject private var viewModel = ShipmentHistoryViewModel()
-    
-    @State private var tableContentWidth: CGFloat = 0
-    
+        
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
            
@@ -21,14 +19,16 @@ struct ShipmentHistoryView: View {
                 HStack(alignment: .top) {
                     Text("Shipment History")
                         .font(
-                            .system(
-                                size: 42,
-                                weight: .bold
+                                .system(
+                                    size: 42,
+                                    weight: .bold
+                                )
                             )
-                        )
-                        .foregroundColor(
-                            Color.theme.textPrimary
-                        )
+                            .foregroundColor(
+                                Color.theme.textPrimary
+                            )
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
 
                     Spacer()
 
@@ -52,8 +52,11 @@ struct ShipmentHistoryView: View {
                         }
                         .padding(.horizontal, 16)
                         .frame(
-                            width: 280,
-                            height: 44
+                            minWidth: 160,
+                            idealWidth: 280,
+                            maxWidth: 280,
+                            minHeight: 44,
+                            maxHeight: 44
                         )
                         .background(Color.white)
                         .clipShape(
@@ -97,7 +100,6 @@ struct ShipmentHistoryView: View {
                 viewModel.currentPage = 1
             }
                 
-                ScrollView(.horizontal, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 0) {
                         
                         // 1. Judul Tabel
@@ -215,10 +217,17 @@ struct ShipmentHistoryView: View {
                             }
                         }
                     }
-                    .frame(minWidth: windowWidth)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity,
+                        alignment: .topLeading
+                    )
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity,
+                        alignment: .topLeading
+                    )
             .background(
                 Color.theme.tertiaryGreen
                     .ignoresSafeArea()
