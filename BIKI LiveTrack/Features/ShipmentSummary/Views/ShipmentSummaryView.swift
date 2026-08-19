@@ -156,7 +156,7 @@ struct ShipmentSummaryView: View {
 
         // Opens the map and read-only trip details.
         .sheet(isPresented: $isShowingTripDetails) {
-            TripDetailsSheet(viewModel: viewModel)
+            TripDetailsSheetView(viewModel: viewModel)
         }
 
         // Opens when "Adjust Start Date & Time" is selected.
