@@ -16,12 +16,16 @@ enum HistoricalLogDisplay: String, CaseIterable, Identifiable {
     var id: Self { self }
 }
 
+struct ExportItem: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
 struct ShipmentSummaryView: View {
     @StateObject private var viewModel: ShipmentSummaryViewModel
     @State private var selectedLogDisplay: HistoricalLogDisplay = .graph
     @State private var isShowingTripDetails = false
-    @State private var exportURL: URL?
-    @State private var isShowingShareSheet = false
+    @State private var exportItem: ExportItem?
     @State private var isShowingStartDateAdjustment = false
     @State private var isShowingEndDateAdjustment = false
     
@@ -167,7 +171,6 @@ struct ShipmentSummaryView: View {
             )
         }
 
-        // Opens when "Adjust End Date & Time" is selected.
         .sheet(isPresented: $isShowingEndDateAdjustment) {
             ShipmentDateTimeAdjustmentSheet(
                 viewModel: viewModel,
@@ -175,11 +178,8 @@ struct ShipmentSummaryView: View {
             )
         }
 
-        // Opens the Apple sharing sheet for CSV or PNG.
-        .sheet(isPresented: $isShowingShareSheet) {
-            if let exportURL {
-                ActivitySheet(activityItems: [exportURL])
-            }
+        .sheet(item: $exportItem) { item in
+            ActivitySheet(activityItems: [item.url])
         }
     }
     
@@ -275,8 +275,7 @@ struct ShipmentSummaryView: View {
             return
         }
         
-        exportURL = url
-        isShowingShareSheet = true
+        exportItem = ExportItem(url: url)
     }
     
     @ViewBuilder private var logContent: some View {
