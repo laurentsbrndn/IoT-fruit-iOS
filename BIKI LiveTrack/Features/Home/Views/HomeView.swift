@@ -49,10 +49,13 @@ struct HomeView: View {
                                 }
                                 .buttonStyle(PlainButtonStyle())
                                 .frame(width: dynamicHistoryCardWidth)
+                                .frame(maxHeight: .infinity)
                                 
                             }
                         }
                         .padding(.horizontal, 24)
+                        // fixedSize di sini berfungsi mencari tinggi ideal maksimum dari children-nya
+                        .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }

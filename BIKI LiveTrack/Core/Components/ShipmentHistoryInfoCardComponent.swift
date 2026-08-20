@@ -5,6 +5,13 @@
 //  Created by Laurentius Brandon Vikario on 11/08/26.
 //
 
+//
+//  ShipmentHistoryInfoCardComponent.swift
+//  BIKI LiveTrack
+//
+//  Created by Laurentius Brandon Vikario on 11/08/26.
+//
+
 import SwiftUI
 import CoreLocation
 
@@ -41,7 +48,7 @@ struct ShipmentHistoryInfoCardComponent: View {
                                 longitude: longitude
                             )
                         }
-//                        .foregroundStyle(.secondary)
+                        // KEMBALIKAN KE SEMULA: Hapus maxHeight di sini
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
@@ -59,6 +66,9 @@ struct ShipmentHistoryInfoCardComponent: View {
                     }
                 }
 
+                // TAMBAHAN: Spacer ini akan mendorong Divider dan info Driver
+                // ke bagian paling bawah card jika card memanjang karena mengikuti card lain.
+                Spacer(minLength: 0)
 
                 Divider()
                     .overlay(Color(uiColor: .separator))
@@ -86,7 +96,8 @@ struct ShipmentHistoryInfoCardComponent: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // PINDAHKAN KE SINI: maxHeight: .infinity diletakkan di container terluar
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(uiColor: .systemBackground))
         .clipShape(.rect(cornerRadius: 20))
         .contentShape(.rect(cornerRadius: 20))
